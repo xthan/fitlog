@@ -1,0 +1,5 @@
+{
+  "name": "FitLog 悦动记录",
+  "description": "一款功能全面的中文健身记录应用，支持动作库管理、SBD PR 追踪、训练容量分析、体脂体重曲线、日历历史及数据导出。",
+  "requestFramePermissions": []
+}
