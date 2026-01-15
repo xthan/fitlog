@@ -429,7 +429,7 @@
                 <div class="bg-white rounded-[1.5rem] p-6 card-shadow border border-slate-50 space-y-4">
                     <div class="flex justify-between items-start">
                         <div class="flex items-center gap-4">
-                            <span class="text-4xl">${log.mood}</span>
+                            <span class="text-4xl leading-none">${log.mood || '😊'}</span>
                             <div>
                                 <h3 class="font-black text-[14px] text-slate-800">${log.date}</h3>
                                 <p class="text-[10px] font-black text-slate-300 tracking-widest mt-0.5 uppercase">容量: ${calculateLogVolume(log)}kg | ${log.weight || '--'}kg</p>
@@ -437,6 +437,13 @@
                         </div>
                         <button onclick="openEditor('${log.id}')" class="px-4 py-1.5 text-blue-600 font-black text-[11px] bg-blue-50 rounded-full">编辑</button>
                     </div>
+
+                    ${log.notes ? `
+                        <div class="bg-slate-50/50 p-3 rounded-xl border-l-4 border-slate-200">
+                            <p class="text-[11px] text-slate-500 font-medium leading-relaxed italic">"${log.notes}"</p>
+                        </div>
+                    ` : ''}
+
                     <div class="space-y-2">
                         ${log.exercises.map(ex => `
                             <div class="bg-slate-50 p-3 rounded-xl flex items-center justify-between">
@@ -528,7 +535,7 @@
                 const dayLogs = appState.logs.filter(l => l.date === iso);
                 const hasLog = dayLogs.length > 0;
                 
-                // 找出主练部位（出现次数最多的部位）
+                // 找出主练部位
                 let mainGroup = "";
                 if (hasLog) {
                     const groupCounts = {};
@@ -538,7 +545,7 @@
                     mainGroup = Object.entries(groupCounts).sort((a,b) => b[1] - a[1])[0][0];
                 }
 
-                dayDiv.className = `flex flex-col items-center justify-start min-h-[50px] py-1 rounded-xl cursor-pointer transition-all ${hasLog ? 'bg-slate-50 border border-slate-100' : 'hover:bg-slate-50'}`;
+                dayDiv.className = `flex flex-col items-center justify-start min-h-[50px] py-1 rounded-xl cursor-pointer transition-all ${hasLog ? 'bg-slate-50 border border-slate-100 shadow-sm' : 'hover:bg-slate-50'}`;
                 dayDiv.innerHTML = `
                     <span class="text-[12px] font-black ${hasLog ? 'text-blue-600' : 'text-slate-400'}">${d}</span>
                     ${hasLog ? `
@@ -553,7 +560,7 @@
                     detail.innerHTML = dayLogs.length ? dayLogs.map(log => `
                         <div class="bg-white p-5 rounded-2xl mt-3 shadow-sm flex justify-between items-center group active:scale-95 transition-all">
                             <div class="flex items-center gap-3">
-                                <span class="text-3xl">${log.mood}</span>
+                                <span class="text-3xl">${log.mood || '😊'}</span>
                                 <div>
                                     <div class="font-black text-slate-800 text-[14px]">${log.date} 训练日</div>
                                     <div class="text-[10px] font-bold text-slate-400 uppercase mt-0.5">主练部位: ${mainGroup} | 容量: ${calculateLogVolume(log)}kg</div>
