@@ -3,39 +3,545 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>FitLog | 悦动记录</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif; }
-        .glass-morphism {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 10px;
-        }
+        :root { --p-blue: #3b82f6; --p-orange: #f97316; }
+        body { font-family: 'Noto Sans SC', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
+        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .btn-active { color: var(--p-blue); font-weight: 700; }
+        .muscle-tag { font-size: 10px; padding: 2px 8px; border-radius: 99px; }
     </style>
 <script type="importmap">
 {
   "imports": {
-    "react/": "https://esm.sh/react@^19.2.3/",
     "react": "https://esm.sh/react@^19.2.3",
-    "recharts": "https://esm.sh/recharts@^3.6.0",
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "@heroicons/react/": "https://esm.sh/@heroicons/react@^2.2.0/"
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "@heroicons/react/": "https://esm.sh/@heroicons/react@^2.2.0/",
+    "recharts": "https://esm.sh/recharts@^3.6.0"
   }
 }
 </script>
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen">
-    <div id="root"></div>
-    <script type="module" src="index.tsx"></script>
+<body class="bg-slate-50 text-slate-900 min-h-screen pb-20">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-40 glass border-b border-slate-100 px-6 py-4 flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-black bg-gradient-to-r from-blue-600 to-orange-500 bg-clip-text text-transparent">FitLog</h1>
+            <p id="header-date" class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">2023年10月27日 星期五</p>
+        </div>
+        <button onclick="ui.showSection('editor')" class="bg-orange-500 text-white p-2 rounded-2xl shadow-lg shadow-orange-200 active:scale-90 transition-transform">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4" /></svg>
+        </button>
+    </header>
+
+    <!-- 主容器 -->
+    <main id="main-content" class="max-w-2xl mx-auto">
+        
+        <!-- 1. 首页 (Dashboard) -->
+        <section id="sec-home" class="tab-content active p-4 space-y-6">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-blue-600 rounded-3xl p-5 text-white shadow-xl shadow-blue-100">
+                    <div class="text-3xl font-black" id="stat-total-workouts">0</div>
+                    <div class="text-[10px] opacity-80 font-bold">累计训练 (次)</div>
+                </div>
+                <div class="bg-orange-500 rounded-3xl p-5 text-white shadow-xl shadow-orange-100">
+                    <div class="text-3xl font-black" id="stat-this-week">0</div>
+                    <div class="text-[10px] opacity-80 font-bold">本周训练 (次)</div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100">
+                <h3 class="font-black text-slate-800 mb-4 flex items-center gap-2">
+                    <span class="w-1.5 h-4 bg-blue-600 rounded-full"></span> 最近记录
+                </h3>
+                <div id="recent-logs-list" class="space-y-3">
+                    <!-- JS 填充 -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. 日历 (Calendar) -->
+        <section id="sec-calendar" class="tab-content p-4">
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+                <div id="calendar-container"></div>
+            </div>
+        </section>
+
+        <!-- 3. 统计 (Stats) -->
+        <section id="sec-stats" class="tab-content p-4 space-y-6">
+            <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100">
+                <h3 class="font-bold text-sm text-slate-400 mb-4 uppercase">SBD 个人记录</h3>
+                <div class="grid grid-cols-3 gap-2" id="pr-container"></div>
+            </div>
+            <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100">
+                <h3 class="font-bold text-sm text-slate-400 mb-4 uppercase">训练容量趋势</h3>
+                <canvas id="volumeChart" height="200"></canvas>
+            </div>
+            <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100">
+                <h3 class="font-bold text-sm text-slate-400 mb-4 uppercase">体重/体脂变化</h3>
+                <canvas id="bodyChart" height="200"></canvas>
+            </div>
+        </section>
+
+        <!-- 4. 动作库 (Library) -->
+        <section id="sec-library" class="tab-content p-4 space-y-4">
+            <div class="flex gap-2">
+                <input type="text" id="lib-search" placeholder="搜索动作..." class="flex-1 bg-white border-0 rounded-2xl px-4 py-3 shadow-sm text-sm">
+                <button onclick="ui.modal('addEx')" class="bg-blue-600 text-white px-4 rounded-2xl font-bold text-sm">+</button>
+            </div>
+            <div id="exercise-list" class="bg-white rounded-3xl p-2 shadow-sm border border-slate-100 divide-y divide-slate-50"></div>
+        </section>
+
+        <!-- 5. 设置 (Settings) -->
+        <section id="sec-settings" class="tab-content p-4 space-y-4">
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="font-bold">训练提醒</p>
+                        <p class="text-[10px] text-slate-400">开启浏览器推送通知</p>
+                    </div>
+                    <button onclick="app.toggleNotify()" id="btn-notify" class="w-12 h-6 bg-slate-200 rounded-full transition-all relative">
+                        <div class="w-4 h-4 bg-white rounded-full absolute top-1 left-1"></div>
+                    </button>
+                </div>
+                <hr class="border-slate-50">
+                <button onclick="app.exportMarkdown()" class="w-full flex items-center justify-between font-bold text-blue-600 group">
+                    <span>导出 Markdown 数据</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                </button>
+                <button onclick="app.clearData()" class="w-full text-left font-bold text-red-400">清空所有本地数据</button>
+            </div>
+            <div class="text-center py-10 opacity-20">
+                <h2 class="text-xl font-black italic">FitLog v2.0 Static</h2>
+                <p class="text-[10px]">Pure JavaScript & CSS</p>
+            </div>
+        </section>
+
+        <!-- 6. 编辑页 (Workout Editor - 浮层) -->
+        <section id="sec-editor" class="tab-content fixed inset-0 z-50 bg-slate-50 overflow-y-auto no-scrollbar hidden">
+            <div class="sticky top-0 glass border-b p-4 flex justify-between items-center z-10">
+                <button onclick="ui.showSection('home')" class="text-slate-400">取消</button>
+                <h2 class="font-black">记一笔</h2>
+                <button onclick="editor.save()" class="bg-blue-600 text-white px-6 py-2 rounded-full font-bold shadow-lg active:scale-95">完成</button>
+            </div>
+            <div class="p-4 space-y-6 max-w-2xl mx-auto">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-white p-4 rounded-3xl shadow-sm border">
+                        <label class="text-[10px] font-black text-slate-400 block mb-1">日期</label>
+                        <input type="date" id="edit-date" class="w-full font-bold border-0 p-0 focus:ring-0">
+                    </div>
+                    <div class="bg-white p-4 rounded-3xl shadow-sm border">
+                        <label class="text-[10px] font-black text-slate-400 block mb-1">心情</label>
+                        <select id="edit-mood" class="w-full font-bold border-0 p-0 focus:ring-0">
+                            <option>😊 开心</option><option>🔥 炸裂</option><option>😴 疲惫</option><option>😤 突破</option><option>🤕 状态一般</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-white p-4 rounded-3xl shadow-sm border">
+                        <label class="text-[10px] font-black text-slate-400 block mb-1">体重 (kg)</label>
+                        <input type="number" id="edit-weight" step="0.1" class="w-full font-bold border-0 p-0 focus:ring-0">
+                    </div>
+                    <div class="bg-white p-4 rounded-3xl shadow-sm border">
+                        <label class="text-[10px] font-black text-slate-400 block mb-1">体脂 (%)</label>
+                        <input type="number" id="edit-bodyfat" step="0.1" class="w-full font-bold border-0 p-0 focus:ring-0">
+                    </div>
+                </div>
+
+                <div id="editor-exercises-list" class="space-y-4"></div>
+
+                <button onclick="ui.modal('pickEx')" class="w-full py-6 border-2 border-dashed border-blue-200 rounded-3xl text-blue-600 font-black hover:bg-blue-50 transition-colors">
+                    + 添加动作
+                </button>
+
+                <textarea id="edit-notes" placeholder="今天的感觉如何？" class="w-full border-0 rounded-3xl p-5 shadow-sm min-h-[120px] focus:ring-2 focus:ring-blue-100"></textarea>
+            </div>
+        </section>
+    </main>
+
+    <!-- Bottom Nav -->
+    <nav class="fixed bottom-0 inset-x-0 glass border-t border-slate-100 flex justify-around items-center py-2 z-40 safe-area-bottom shadow-[0_-10px_30px_rgba(0,0,0,0.03)]">
+        <button onclick="ui.showSection('home')" class="nav-btn flex flex-col items-center gap-1 btn-active" data-tab="home">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+            <span class="text-[10px]">首页</span>
+        </button>
+        <button onclick="ui.showSection('calendar')" class="nav-btn flex flex-col items-center gap-1 text-slate-400" data-tab="calendar">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+            <span class="text-[10px]">日历</span>
+        </button>
+        <button onclick="ui.showSection('stats')" class="nav-btn flex flex-col items-center gap-1 text-slate-400" data-tab="stats">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+            <span class="text-[10px]">统计</span>
+        </button>
+        <button onclick="ui.showSection('library')" class="nav-btn flex flex-col items-center gap-1 text-slate-400" data-tab="library">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+            <span class="text-[10px]">动作库</span>
+        </button>
+        <button onclick="ui.showSection('settings')" class="nav-btn flex flex-col items-center gap-1 text-slate-400" data-tab="settings">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+            <span class="text-[10px]">设置</span>
+        </button>
+    </nav>
+
+    <!-- Modals (Simple Overlay) -->
+    <div id="modal-overlay" class="fixed inset-0 z-[60] bg-black/60 hidden items-center justify-center p-6 backdrop-blur-sm">
+        <div id="modal-addEx" class="bg-white w-full max-w-sm rounded-3xl p-6 hidden">
+            <h3 class="font-black text-lg mb-4">添加自定义动作</h3>
+            <input type="text" id="new-ex-name" placeholder="动作名称..." class="w-full bg-slate-50 border-0 rounded-2xl p-4 mb-4">
+            <select id="new-ex-group" class="w-full bg-slate-50 border-0 rounded-2xl p-4 mb-4">
+                <option>胸</option><option>肩</option><option>背</option><option>腿</option><option>胳膊</option><option>核心</option><option>有氧</option>
+            </select>
+            <div class="flex gap-2">
+                <button onclick="ui.closeModal()" class="flex-1 bg-slate-100 py-3 rounded-2xl font-bold">取消</button>
+                <button onclick="app.addExercise()" class="flex-1 bg-blue-600 text-white py-3 rounded-2xl font-bold">确定</button>
+            </div>
+        </div>
+        
+        <div id="modal-pickEx" class="bg-white w-full max-w-md rounded-3xl p-6 hidden max-h-[80vh] flex flex-col">
+            <h3 class="font-black text-lg mb-4">选择动作</h3>
+            <div id="pick-ex-list" class="flex-1 overflow-y-auto no-scrollbar space-y-2"></div>
+            <button onclick="ui.closeModal()" class="mt-4 w-full bg-slate-100 py-3 rounded-2xl font-bold">关闭</button>
+        </div>
+    </div>
+
+    <script type="module">
+        // --- 数据常量与初始化 ---
+        const MUSCLE_COLORS = { '胸': '#3b82f6', '肩': '#f97316', '背': '#10b981', '腿': '#8b5cf6', '胳膊': '#ec4899', '核心': '#f59e0b', '有氧': '#06b6d4' };
+        const DEFAULT_EXERCISES = [
+            { id: '1', name: '杠铃卧推', group: '胸', isCustom: false },
+            { id: '3', name: '推举', group: '肩', isCustom: false },
+            { id: '5', name: '引体向上', group: '背', isCustom: false },
+            { id: '7', name: '深蹲', group: '腿', isCustom: false },
+            { id: '8', name: '硬拉', group: '腿', isCustom: false }
+        ];
+
+        let state = {
+            logs: JSON.parse(localStorage.getItem('fitlog_logs') || '[]'),
+            customEx: JSON.parse(localStorage.getItem('fitlog_custom_ex') || '[]'),
+            notif: localStorage.getItem('fitlog_notif') === 'true'
+        };
+
+        const app = {
+            saveState() {
+                localStorage.setItem('fitlog_logs', JSON.stringify(state.logs));
+                localStorage.setItem('fitlog_custom_ex', JSON.stringify(state.customEx));
+                localStorage.setItem('fitlog_notif', state.notif);
+            },
+            addExercise() {
+                const name = document.getElementById('new-ex-name').value;
+                const group = document.getElementById('new-ex-group').value;
+                if (!name) return;
+                state.customEx.push({ id: Date.now().toString(), name, group, isCustom: true });
+                this.saveState();
+                ui.renderLibrary();
+                ui.closeModal();
+                document.getElementById('new-ex-name').value = '';
+            },
+            deleteEx(id) {
+                state.customEx = state.customEx.filter(e => e.id !== id);
+                this.saveState();
+                ui.renderLibrary();
+            },
+            deleteLog(id) {
+                if(!confirm('删除后无法恢复，确定？')) return;
+                state.logs = state.logs.filter(l => l.id !== id);
+                this.saveState();
+                ui.renderDashboard();
+                ui.renderStats();
+            },
+            toggleNotify() {
+                state.notif = !state.notif;
+                this.saveState();
+                ui.updateSettings();
+            },
+            exportMarkdown() {
+                let md = "# FitLog 健身日志导出\n\n";
+                state.logs.forEach(l => {
+                    md += `## ${l.date} ${l.mood}\n`;
+                    if(l.weight) md += `体重: ${l.weight}kg | 体脂: ${l.bodyfat}%\n`;
+                    l.exercises.forEach(ex => {
+                        md += `### ${ex.name}\n`;
+                        ex.sets.forEach((s, i) => md += `- Set ${i+1}: ${s.w}kg x ${s.r} reps\n`);
+                    });
+                    if(l.notes) md += `备注: ${l.notes}\n`;
+                    md += `\n---\n\n`;
+                });
+                const blob = new Blob([md], { type: 'text/markdown' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `fitlog_${new Date().toISOString().split('T')[0]}.md`;
+                a.click();
+            },
+            clearData() {
+                if(confirm('清空所有数据？此操作不可逆！')) {
+                    localStorage.clear();
+                    location.reload();
+                }
+            }
+        };
+
+        // --- 编辑器逻辑 (离线安全) ---
+        let currentEditingId = null;
+        let draftExercises = [];
+
+        const editor = {
+            open(id = null) {
+                currentEditingId = id;
+                const log = id ? state.logs.find(l => l.id === id) : null;
+                
+                document.getElementById('edit-date').value = log ? log.date : new Date().toISOString().split('T')[0];
+                document.getElementById('edit-mood').value = log ? log.mood : '😊 开心';
+                document.getElementById('edit-weight').value = log ? log.weight : '';
+                document.getElementById('edit-bodyfat').value = log ? log.bodyfat : '';
+                document.getElementById('edit-notes').value = log ? log.notes : '';
+                
+                draftExercises = log ? JSON.parse(JSON.stringify(log.exercises)) : [];
+                this.render();
+                ui.showSection('editor');
+            },
+            addExerciseToWorkout(ex) {
+                draftExercises.push({ id: ex.id, name: ex.name, group: ex.group, sets: [{ w: 0, r: 0 }] });
+                this.render();
+                ui.closeModal();
+            },
+            addSet(exIdx) {
+                const prevSet = draftExercises[exIdx].sets[draftExercises[exIdx].sets.length - 1];
+                draftExercises[exIdx].sets.push({ w: prevSet?.w || 0, r: prevSet?.r || 0 });
+                this.render();
+            },
+            updateValue(exIdx, setIdx, key, val) {
+                draftExercises[exIdx].sets[setIdx][key] = parseFloat(val) || 0;
+            },
+            removeEx(exIdx) {
+                draftExercises.splice(exIdx, 1);
+                this.render();
+            },
+            removeSet(exIdx, setIdx) {
+                draftExercises[exIdx].sets.splice(setIdx, 1);
+                this.render();
+            },
+            save() {
+                const newLog = {
+                    id: currentEditingId || Date.now().toString(),
+                    date: document.getElementById('edit-date').value,
+                    mood: document.getElementById('edit-mood').value,
+                    weight: parseFloat(document.getElementById('edit-weight').value) || null,
+                    bodyfat: parseFloat(document.getElementById('edit-bodyfat').value) || null,
+                    notes: document.getElementById('edit-notes').value,
+                    exercises: draftExercises
+                };
+
+                if (currentEditingId) {
+                    const idx = state.logs.findIndex(l => l.id === currentEditingId);
+                    state.logs[idx] = newLog;
+                } else {
+                    state.logs.push(newLog);
+                }
+                
+                state.logs.sort((a,b) => new Date(b.date) - new Date(a.date));
+                app.saveState();
+                ui.renderDashboard();
+                ui.renderStats();
+                ui.showSection('home');
+            },
+            render() {
+                const list = document.getElementById('editor-exercises-list');
+                list.innerHTML = draftExercises.map((ex, exIdx) => `
+                    <div class="bg-white rounded-3xl p-5 border shadow-sm">
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="font-black text-slate-700 flex items-center gap-2">
+                                <span class="w-1.5 h-4 rounded-full" style="background:${MUSCLE_COLORS[ex.group]}"></span>
+                                ${ex.name}
+                            </h4>
+                            <button onclick="editor.removeEx(${exIdx})" class="text-slate-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                            </button>
+                        </div>
+                        <div class="space-y-3">
+                            ${ex.sets.map((s, sIdx) => `
+                                <div class="flex items-center gap-3">
+                                    <span class="w-6 text-[10px] font-black text-slate-300">#${sIdx+1}</span>
+                                    <input type="number" onchange="editor.updateValue(${exIdx}, ${sIdx}, 'w', this.value)" value="${s.w}" class="flex-1 bg-slate-50 border-0 rounded-xl px-3 py-2 text-sm text-center" placeholder="KG">
+                                    <input type="number" onchange="editor.updateValue(${exIdx}, ${sIdx}, 'r', this.value)" value="${s.r}" class="flex-1 bg-slate-50 border-0 rounded-xl px-3 py-2 text-sm text-center" placeholder="次">
+                                    <button onclick="editor.removeSet(${exIdx}, ${sIdx})" class="text-slate-200">×</button>
+                                </div>
+                            `).join('')}
+                            <button onclick="editor.addSet(${exIdx})" class="w-full py-2 bg-slate-50 rounded-xl text-[10px] font-black text-slate-400">+ 添加一组</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        };
+
+        // --- UI 渲染引擎 ---
+        const ui = {
+            showSection(id) {
+                if(id === 'editor') {
+                    editor.open();
+                    return;
+                }
+                document.querySelectorAll('.tab-content').forEach(s => s.classList.remove('active'));
+                document.getElementById('sec-' + id).classList.add('active');
+                document.querySelectorAll('.nav-btn').forEach(b => {
+                    b.classList.remove('btn-active', 'text-slate-400');
+                    if(b.dataset.tab === id) b.classList.add('btn-active');
+                    else b.classList.add('text-slate-400');
+                });
+                
+                if(id === 'stats') this.renderStats();
+                if(id === 'calendar') this.renderCalendar();
+            },
+            modal(id) {
+                document.getElementById('modal-overlay').classList.replace('hidden', 'flex');
+                document.getElementById('modal-' + id).classList.remove('hidden');
+                if(id === 'pickEx') this.renderPickEx();
+            },
+            closeModal() {
+                document.getElementById('modal-overlay').classList.replace('flex', 'hidden');
+                document.querySelectorAll('#modal-overlay > div').forEach(d => d.classList.add('hidden'));
+            },
+            renderDashboard() {
+                document.getElementById('stat-total-workouts').innerText = state.logs.length;
+                const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
+                document.getElementById('stat-this-week').innerText = state.logs.filter(l => new Date(l.date) > weekAgo).length;
+
+                const list = document.getElementById('recent-logs-list');
+                list.innerHTML = state.logs.slice(0, 5).map(l => `
+                    <div class="p-4 bg-slate-50 rounded-2xl flex justify-between items-center group">
+                        <div onclick="editor.open('${l.id}')" class="flex-1">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-sm font-black text-slate-700">${l.date}</span>
+                                <span class="text-xs">${l.mood.split(' ')[0]}</span>
+                            </div>
+                            <div class="text-[10px] text-slate-400 font-medium">${l.exercises.map(ex => ex.name).join(' · ')}</div>
+                        </div>
+                        <button onclick="app.deleteLog('${l.id}')" class="opacity-0 group-hover:opacity-100 text-red-300">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
+                        </button>
+                    </div>
+                `).join('') || '<p class="text-center py-6 text-slate-300 text-xs">暂无记录</p>';
+            },
+            renderLibrary() {
+                const list = document.getElementById('exercise-list');
+                const all = [...DEFAULT_EXERCISES, ...state.customEx];
+                list.innerHTML = all.map(e => `
+                    <div class="flex items-center justify-between p-4">
+                        <div class="flex items-center gap-3">
+                            <span class="muscle-tag text-white" style="background:${MUSCLE_COLORS[e.group]}">${e.group}</span>
+                            <span class="font-bold text-slate-700 text-sm">${e.name}</span>
+                        </div>
+                        ${e.isCustom ? `<button onclick="app.deleteEx('${e.id}')" class="text-slate-300">×</button>` : ''}
+                    </div>
+                `).join('');
+            },
+            renderPickEx() {
+                const list = document.getElementById('pick-ex-list');
+                const all = [...DEFAULT_EXERCISES, ...state.customEx];
+                list.innerHTML = all.map(e => `
+                    <button onclick='editor.addExerciseToWorkout(${JSON.stringify(e)})' class="w-full text-left p-4 hover:bg-slate-50 rounded-2xl flex items-center justify-between">
+                        <span class="font-bold text-slate-600">${e.name}</span>
+                        <span class="text-[10px] text-slate-400">${e.group}</span>
+                    </button>
+                `).join('');
+            },
+            renderStats() {
+                const prs = { '深蹲': 0, '卧推': 0, '硬拉': 0 };
+                state.logs.forEach(l => l.exercises.forEach(ex => {
+                    if(ex.name.includes('深蹲')) prs['深蹲'] = Math.max(prs['深蹲'], ...ex.sets.map(s => s.w));
+                    if(ex.name.includes('卧推')) prs['卧推'] = Math.max(prs['卧推'], ...ex.sets.map(s => s.w));
+                    if(ex.name.includes('硬拉')) prs['硬拉'] = Math.max(prs['硬拉'], ...ex.sets.map(s => s.w));
+                }));
+                document.getElementById('pr-container').innerHTML = Object.entries(prs).map(([k,v]) => `
+                    <div class="bg-slate-50 rounded-2xl p-3 text-center">
+                        <div class="text-[10px] font-black text-slate-300 uppercase">${k}</div>
+                        <div class="text-lg font-black text-slate-700">${v || '--'}<span class="text-[10px] ml-0.5">kg</span></div>
+                    </div>
+                `).join('');
+
+                // Charts
+                const ctxVol = document.getElementById('volumeChart').getContext('2d');
+                const recentLogs = [...state.logs].reverse().slice(-10);
+                new Chart(ctxVol, {
+                    type: 'line',
+                    data: {
+                        labels: recentLogs.map(l => l.date.slice(5)),
+                        datasets: [{ 
+                            label: '训练容量', 
+                            data: recentLogs.map(l => l.exercises.reduce((a,e) => a + e.sets.reduce((as,s) => as + (s.w*s.r), 0), 0)),
+                            borderColor: '#3b82f6', tension: 0.4, fill: true, backgroundColor: 'rgba(59,130,246,0.1)' 
+                        }]
+                    },
+                    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+                });
+
+                const ctxBody = document.getElementById('bodyChart').getContext('2d');
+                const bodyLogs = recentLogs.filter(l => l.weight);
+                new Chart(ctxBody, {
+                    type: 'line',
+                    data: {
+                        labels: bodyLogs.map(l => l.date.slice(5)),
+                        datasets: [
+                            { label: '体重', data: bodyLogs.map(l => l.weight), borderColor: '#f97316' },
+                            { label: '体脂', data: bodyLogs.map(l => l.bodyfat), borderColor: '#8b5cf6' }
+                        ]
+                    }
+                });
+            },
+            renderCalendar() {
+                const container = document.getElementById('calendar-container');
+                const now = new Date();
+                const month = now.getMonth();
+                const year = now.getFullYear();
+                const firstDay = new Date(year, month, 1).getDay();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+                let html = `<div class="flex justify-between items-center mb-6"><h4 class="font-black text-xl">${year}年 ${month+1}月</h4></div>`;
+                html += `<div class="grid grid-cols-7 gap-1 text-center mb-2">${['日','一','二','三','四','五','六'].map(d => `<span class="text-[10px] font-black text-slate-300">${d}</span>`).join('')}</div>`;
+                html += `<div class="grid grid-cols-7 gap-1">`;
+                for(let i=0; i<firstDay; i++) html += `<div></div>`;
+                for(let d=1; d<=daysInMonth; d++) {
+                    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                    const hasLog = state.logs.some(l => l.date === dateStr);
+                    html += `<div class="h-10 flex flex-col items-center justify-center rounded-xl transition-all ${hasLog ? 'bg-blue-600 text-white font-black shadow-lg shadow-blue-100' : 'text-slate-400'}">${d}</div>`;
+                }
+                html += `</div>`;
+                container.innerHTML = html;
+            },
+            updateSettings() {
+                const btn = document.getElementById('btn-notify');
+                if(state.notif) {
+                    btn.classList.replace('bg-slate-200', 'bg-blue-600');
+                    btn.firstChild.nextSibling.style.left = '28px';
+                } else {
+                    btn.classList.replace('bg-blue-600', 'bg-slate-200');
+                    btn.firstChild.nextSibling.style.left = '4px';
+                }
+            }
+        };
+
+        // --- 初始化 ---
+        document.getElementById('header-date').innerText = new Intl.DateTimeFormat('zh-CN', { dateStyle: 'full' }).format(new Date());
+        ui.renderDashboard();
+        ui.renderLibrary();
+        ui.updateSettings();
+
+        // 绑定全局
+        window.ui = ui;
+        window.app = app;
+        window.editor = editor;
+
+    </script>
 </body>
 </html>
