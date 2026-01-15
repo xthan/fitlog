@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FitLog | 悦动记录</title>
+    <title>FitLog</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
@@ -23,9 +23,8 @@
         .active-nav .nav-dot { opacity: 1; transform: scale(1); }
         .card-shadow { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05); }
         input:focus, select:focus, textarea:focus { border-color: #3b82f6 !important; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
-        .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
         
-        /* iPhone 13 适配 */
+        /* 针对 iPhone 13 适配 */
         nav {
             padding-bottom: calc(15px + var(--safe-bottom));
             height: calc(85px + var(--safe-bottom));
@@ -33,42 +32,43 @@
         main {
             padding-bottom: calc(100px + var(--safe-bottom));
         }
+        .header-pt {
+            padding-top: calc(1.2rem + var(--safe-top));
+        }
     </style>
 </head>
 <body class="text-slate-900 overflow-hidden">
     <div class="flex flex-col h-screen max-w-2xl mx-auto bg-white shadow-2xl relative overflow-hidden">
         
-        <!-- 头部导航（含整合后的 Slogan） -->
-        <header class="z-30 bg-white/95 backdrop-blur-md sticky top-0 border-b border-slate-100 px-5 py-3 flex items-center gap-3" style="padding-top: calc(0.8rem + var(--safe-top))">
-            <h1 class="text-2xl font-black bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent italic tracking-tighter shrink-0">FitLog</h1>
-            <div class="h-4 w-[1px] bg-slate-200"></div>
-            <p id="header-banner" class="text-[11px] text-slate-400 font-bold italic truncate flex-1"></p>
+        <!-- 头部导航 -->
+        <header class="z-30 bg-white/95 backdrop-blur-md sticky top-0 border-b border-slate-100 px-6 py-3 flex items-center header-pt">
+            <h1 class="text-3xl font-black bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent tracking-tighter shrink-0">FITLOG</h1>
+            <div class="h-4 w-[1px] bg-slate-200 mx-4 shrink-0"></div>
+            <p id="header-banner" class="text-[14px] text-slate-400 font-bold italic truncate flex-1 pl-1"></p>
         </header>
 
         <!-- 主体内容 -->
         <main id="main-scroll" class="flex-1 overflow-y-auto custom-scrollbar bg-slate-50/30">
             
-            <!-- 标签页：首页 -->
-            <div id="tab-home" class="tab-content active p-4 space-y-6">
-                <div id="header-date" class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-1"></div>
-                
+            <!-- 首页 -->
+            <div id="tab-home" class="tab-content active p-4 space-y-6 pt-6">
                 <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-blue-600 rounded-[2rem] p-5 text-white card-shadow relative overflow-hidden group">
+                    <div class="bg-blue-600 rounded-[2rem] p-6 text-white card-shadow relative overflow-hidden group">
                         <div id="stat-total" class="text-3xl font-black mono leading-none">0</div>
-                        <div class="text-[10px] opacity-80 font-black uppercase tracking-widest mt-2">累计训练</div>
+                        <div class="text-[11px] opacity-80 font-black tracking-widest mt-2">累计训练</div>
                     </div>
-                    <div class="bg-slate-900 rounded-[2rem] p-5 text-white card-shadow relative overflow-hidden group">
+                    <div class="bg-slate-900 rounded-[2rem] p-6 text-white card-shadow relative overflow-hidden group">
                         <div id="stat-month" class="text-3xl font-black mono leading-none">0</div>
-                        <div class="text-[10px] opacity-80 font-black uppercase tracking-widest mt-2">本月目标</div>
+                        <div class="text-[11px] opacity-80 font-black tracking-widest mt-2">本月训练</div>
                     </div>
                 </div>
 
                 <div class="flex justify-between items-end px-1">
                     <div>
                         <h2 class="text-xl font-black text-slate-800">训练日志</h2>
-                        <p class="text-[10px] text-slate-400 font-black">记录点滴进步</p>
+                        <p class="text-[11px] text-slate-400 font-bold">坚持就是胜利</p>
                     </div>
-                    <button onclick="openEditor()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-xs font-black shadow-lg shadow-blue-200 active:scale-95 transition-all">
+                    <button onclick="openEditor()" class="bg-blue-600 text-white px-5 py-2.5 rounded-xl text-[13px] font-black shadow-lg shadow-blue-100 active:scale-95 transition-all">
                         记一笔
                     </button>
                 </div>
@@ -76,7 +76,7 @@
                 <div id="log-list" class="space-y-4"></div>
             </div>
 
-            <!-- 标签页：日历 -->
+            <!-- 日历 -->
             <div id="tab-calendar" class="tab-content p-4 space-y-4">
                 <div class="bg-white rounded-[2rem] p-6 border border-slate-100 card-shadow">
                     <div class="flex justify-between items-center mb-6">
@@ -86,77 +86,81 @@
                             <button onclick="changeMonth(1)" class="w-10 h-10 flex items-center justify-center bg-slate-50 rounded-xl text-slate-500">→</button>
                         </div>
                     </div>
-                    <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-black text-slate-300 uppercase mb-2">
+                    <div class="grid grid-cols-7 gap-1 text-center text-[11px] font-black text-slate-300 mb-2">
                         <div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div>
                     </div>
-                    <div id="calendar-days" class="grid grid-cols-7 gap-2 text-center"></div>
+                    <div id="calendar-days" class="grid grid-cols-7 gap-y-4 gap-x-2 text-center"></div>
                 </div>
                 <div id="calendar-detail"></div>
             </div>
 
-            <!-- 标签页：统计 -->
+            <!-- 统计 -->
             <div id="tab-stats" class="tab-content p-4 space-y-6">
                 <div class="grid grid-cols-3 gap-2">
                     <div class="bg-white p-4 rounded-2xl border border-slate-100 text-center shadow-sm">
-                        <div class="text-[9px] font-black text-red-500 mb-1">深蹲 PR</div>
+                        <div class="text-[10px] font-black text-red-500 mb-1">深蹲 PR</div>
                         <div id="pr-squat" class="text-lg font-black mono">--</div>
                     </div>
                     <div class="bg-white p-4 rounded-2xl border border-slate-100 text-center shadow-sm">
-                        <div class="text-[9px] font-black text-blue-500 mb-1">卧推 PR</div>
+                        <div class="text-[10px] font-black text-blue-500 mb-1">卧推 PR</div>
                         <div id="pr-bench" class="text-lg font-black mono">--</div>
                     </div>
                     <div class="bg-white p-4 rounded-2xl border border-slate-100 text-center shadow-sm">
-                        <div class="text-[9px] font-black text-indigo-500 mb-1">硬拉 PR</div>
+                        <div class="text-[10px] font-black text-indigo-500 mb-1">硬拉 PR</div>
                         <div id="pr-deadlift" class="text-lg font-black mono">--</div>
                     </div>
                 </div>
                 <div class="space-y-4">
-                    <div class="bg-white rounded-[1.5rem] p-4 card-shadow border border-slate-100">
-                        <h3 class="text-xs font-black text-slate-800 mb-3 flex items-center gap-2">SBD 力量趋势 (KG)</h3>
+                    <div class="bg-white rounded-[1.5rem] p-5 card-shadow border border-slate-100">
+                        <h3 class="text-[13px] font-black text-slate-800 mb-3">总训练容量趋势 (KG)</h3>
+                        <canvas id="volume-chart" height="180"></canvas>
+                    </div>
+                    <div class="bg-white rounded-[1.5rem] p-5 card-shadow border border-slate-100">
+                        <h3 class="text-[13px] font-black text-slate-800 mb-3">SBD 力量趋势 (KG)</h3>
                         <canvas id="sbd-chart" height="180"></canvas>
                     </div>
-                    <div class="bg-white rounded-[1.5rem] p-4 card-shadow border border-slate-100">
-                        <h3 class="text-xs font-black text-slate-800 mb-3 flex items-center gap-2">体重趋势 (KG)</h3>
+                    <div class="bg-white rounded-[1.5rem] p-5 card-shadow border border-slate-100">
+                        <h3 class="text-[13px] font-black text-slate-800 mb-3 text-orange-500">体重变化 (KG)</h3>
                         <canvas id="weight-chart" height="150"></canvas>
                     </div>
-                    <div class="bg-white rounded-[1.5rem] p-4 card-shadow border border-slate-100">
-                        <h3 class="text-xs font-black text-slate-800 mb-3 flex items-center gap-2">体脂变化 (%)</h3>
+                    <div class="bg-white rounded-[1.5rem] p-5 card-shadow border border-slate-100">
+                        <h3 class="text-[13px] font-black text-slate-800 mb-3 text-pink-500">体脂比例 (%)</h3>
                         <canvas id="fat-chart" height="150"></canvas>
                     </div>
                 </div>
             </div>
 
-            <!-- 标签页：动作库 -->
+            <!-- 动作库 -->
             <div id="tab-library" class="tab-content p-4 space-y-4">
                 <div class="bg-white p-6 rounded-[2rem] card-shadow border border-slate-100">
-                    <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">自定义动作</h3>
+                    <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4">动作列表管理</h3>
                     <div class="space-y-3">
-                        <input type="text" id="lib-new-name" placeholder="输入动作名..." class="w-full bg-slate-50 border-0 rounded-xl px-4 py-3 text-sm font-bold outline-none">
+                        <input type="text" id="lib-new-name" placeholder="动作名称" class="w-full bg-slate-50 border-0 rounded-xl px-4 py-3 text-[13px] font-bold outline-none">
                         <div class="flex gap-2">
-                            <select id="lib-new-group" class="flex-1 bg-slate-50 border-0 rounded-xl px-4 py-3 text-sm font-bold outline-none">
+                            <select id="lib-new-group" class="flex-1 bg-slate-50 border-0 rounded-xl px-4 py-3 text-[13px] font-bold outline-none">
                                 <option>胸部</option><option>背部</option><option>腿部</option><option>肩部</option><option>手臂</option><option>核心</option><option>有氧</option>
                             </select>
-                            <button onclick="addLibraryItem()" class="bg-slate-900 text-white px-6 py-3 rounded-xl text-sm font-black active:scale-95 transition-all">添加</button>
+                            <button onclick="addLibraryItem()" class="bg-slate-900 text-white px-6 py-3 rounded-xl text-[13px] font-black active:scale-95 transition-all">添加</button>
                         </div>
                     </div>
                 </div>
                 <div id="lib-list" class="bg-white rounded-[2rem] card-shadow border border-slate-100 overflow-hidden divide-y divide-slate-50"></div>
             </div>
 
-            <!-- 标签页：设置 -->
+            <!-- 设置 -->
             <div id="tab-settings" class="tab-content p-4 space-y-4">
                 <div class="bg-white rounded-[2rem] p-6 card-shadow border border-slate-100 space-y-6">
                     <div>
-                        <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">我的标语</h3>
-                        <textarea id="settings-banner" class="w-full bg-slate-50 p-4 rounded-xl text-sm font-bold outline-none border-0" rows="2"></textarea>
-                        <button onclick="updateSettings()" class="mt-3 w-full bg-blue-600 text-white py-3 rounded-xl font-black text-sm active:scale-95">保存设置</button>
+                        <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3">个性化标语</h3>
+                        <textarea id="settings-banner" class="w-full bg-slate-50 p-4 rounded-xl text-[13px] font-bold outline-none border-0" rows="2"></textarea>
+                        <button onclick="updateSettings()" class="mt-3 w-full bg-blue-600 text-white py-3 rounded-xl font-black text-[13px] active:scale-95">保存并更新</button>
                     </div>
                     <div class="pt-6 border-t border-slate-50 space-y-3">
-                        <button onclick="exportMarkdown()" class="w-full p-4 bg-blue-50 text-blue-600 rounded-xl text-xs font-black flex justify-between items-center">
-                            <span>导出数据 (Markdown)</span>
+                        <button onclick="exportMarkdown()" class="w-full p-4 bg-blue-50 text-blue-600 rounded-xl text-[12px] font-black flex justify-between items-center">
+                            <span>导出 Markdown 日志</span>
                             <span>📄</span>
                         </button>
-                        <button onclick="clearData()" class="w-full p-4 bg-red-50 text-red-500 rounded-xl text-xs font-black">
+                        <button onclick="clearData()" class="w-full p-4 bg-red-50 text-red-500 rounded-xl text-[12px] font-black">
                             清空所有数据
                         </button>
                     </div>
@@ -166,32 +170,32 @@
 
         <!-- 编辑面板 -->
         <div id="editor-overlay" class="fixed inset-0 bg-white z-[100] hidden flex flex-col translate-y-full transition-transform duration-500">
-            <div class="px-6 py-4 border-b flex justify-between items-center glass sticky top-0 z-10" style="padding-top: calc(1rem + var(--safe-top))">
-                <button onclick="closeEditor(true)" class="text-slate-400 font-black text-xs uppercase px-2">取消</button>
+            <div class="px-6 py-4 border-b flex justify-between items-center glass sticky top-0 z-10 header-pt">
+                <button onclick="closeEditor(true)" class="text-slate-400 font-black text-[13px] px-2">取消</button>
                 <h2 id="editor-title" class="font-black text-base text-slate-800">编辑记录</h2>
-                <button onclick="saveWorkout()" class="bg-blue-600 text-white px-6 py-2 rounded-full font-black text-xs">完成</button>
+                <button onclick="saveWorkout()" class="bg-blue-600 text-white px-6 py-2 rounded-full font-black text-[13px]">完成</button>
             </div>
             
             <div class="flex-1 overflow-y-auto px-4 py-6 space-y-6 bg-slate-50/50 pb-32">
                 <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm"><label class="text-[9px] text-slate-400 font-black block mb-1 uppercase">日期</label><input type="date" id="edit-date" class="w-full text-sm font-black outline-none bg-transparent" onchange="syncCurrentInputsToState()"></div>
-                    <div class="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm"><label class="text-[9px] text-slate-400 font-black block mb-1 uppercase">心情</label><select id="edit-mood" class="w-full text-base font-black outline-none bg-transparent" onchange="syncCurrentInputsToState()"><option>😊</option><option>🔥</option><option>😴</option><option>😤</option><option>🤕</option></select></div>
+                    <div class="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm"><label class="text-[10px] text-slate-400 font-black block mb-1">日期</label><input type="date" id="edit-date" class="w-full text-[13px] font-black outline-none bg-transparent" onchange="syncCurrentInputsToState()"></div>
+                    <div class="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm"><label class="text-[10px] text-slate-400 font-black block mb-1">心情反馈</label><select id="edit-mood" class="w-full text-[15px] font-black outline-none bg-transparent" onchange="syncCurrentInputsToState()"><option>😊</option><option>🔥</option><option>😴</option><option>😤</option><option>🤕</option></select></div>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm"><label class="text-[9px] text-slate-400 font-black block mb-1 uppercase">体重 (KG)</label><input type="number" step="0.1" id="edit-weight" class="w-full text-sm font-black outline-none bg-transparent mono" placeholder="0.0" onchange="syncCurrentInputsToState()"></div>
-                    <div class="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm"><label class="text-[9px] text-slate-400 font-black block mb-1 uppercase">体脂 (%)</label><input type="number" step="0.1" id="edit-fat" class="w-full text-sm font-black outline-none bg-transparent mono" placeholder="0.0" onchange="syncCurrentInputsToState()"></div>
+                    <div class="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm"><label class="text-[10px] text-slate-400 font-black block mb-1">体重 (KG)</label><input type="number" step="0.1" id="edit-weight" class="w-full text-[13px] font-black outline-none bg-transparent mono" placeholder="0.0" onchange="syncCurrentInputsToState()"></div>
+                    <div class="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm"><label class="text-[10px] text-slate-400 font-black block mb-1">体脂 (%)</label><input type="number" step="0.1" id="edit-fat" class="w-full text-[13px] font-black outline-none bg-transparent mono" placeholder="0.0" onchange="syncCurrentInputsToState()"></div>
                 </div>
                 
                 <div id="edit-exercises" class="space-y-4"></div>
                 
                 <div class="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm">
-                    <h3 class="font-black text-slate-800 text-base mb-4">快速添加</h3>
+                    <h3 class="font-black text-slate-800 text-base mb-4">常用动作库</h3>
                     <div id="edit-lib-grid" class="grid grid-cols-2 gap-2"></div>
                 </div>
                 
-                <textarea id="edit-notes" placeholder="写点什么..." class="w-full bg-white p-5 rounded-[2rem] border border-slate-100 min-h-[100px] text-sm font-bold outline-none" onchange="syncCurrentInputsToState()"></textarea>
+                <textarea id="edit-notes" placeholder="记录此刻的心情或备注..." class="w-full bg-white p-5 rounded-[1.5rem] border border-slate-100 min-h-[100px] text-[13px] font-bold outline-none" onchange="syncCurrentInputsToState()"></textarea>
 
-                <button id="delete-log-btn" onclick="confirmDeleteCurrentLog()" class="w-full py-4 bg-white text-red-500 rounded-2xl font-black border border-red-50 text-sm hidden">
+                <button id="delete-log-btn" onclick="confirmDeleteCurrentLog()" class="w-full py-4 bg-white text-red-500 rounded-2xl font-black border border-red-50 text-[13px] hidden">
                     删除本条记录
                 </button>
             </div>
@@ -200,23 +204,23 @@
         <!-- 底部导航栏 -->
         <nav class="flex justify-around items-center bg-white/95 backdrop-blur-xl border-t border-slate-100 absolute bottom-0 w-full z-50">
             <button onclick="switchTab('home')" class="nav-btn active-nav flex-1 flex flex-col items-center gap-1 transition-all" data-tab="home">
-                <div class="nav-text text-[15px] font-black uppercase tracking-tight">首页</div>
+                <div class="nav-text text-[17px] font-black">首页</div>
                 <div class="nav-dot w-1.5 h-1.5 bg-blue-600 rounded-full opacity-0 scale-0 transition-all"></div>
             </button>
             <button onclick="switchTab('calendar')" class="nav-btn flex-1 flex flex-col items-center gap-1 transition-all" data-tab="calendar">
-                <div class="nav-text text-[15px] font-black uppercase tracking-tight">日历</div>
+                <div class="nav-text text-[17px] font-black">日历</div>
                 <div class="nav-dot w-1.5 h-1.5 bg-blue-600 rounded-full opacity-0 scale-0 transition-all"></div>
             </button>
             <button onclick="switchTab('stats')" class="nav-btn flex-1 flex flex-col items-center gap-1 transition-all" data-tab="stats">
-                <div class="nav-text text-[15px] font-black uppercase tracking-tight">统计</div>
+                <div class="nav-text text-[17px] font-black">统计</div>
                 <div class="nav-dot w-1.5 h-1.5 bg-blue-600 rounded-full opacity-0 scale-0 transition-all"></div>
             </button>
             <button onclick="switchTab('library')" class="nav-btn flex-1 flex flex-col items-center gap-1 transition-all" data-tab="library">
-                <div class="nav-text text-[15px] font-black uppercase tracking-tight">动作库</div>
+                <div class="nav-text text-[17px] font-black">动作库</div>
                 <div class="nav-dot w-1.5 h-1.5 bg-blue-600 rounded-full opacity-0 scale-0 transition-all"></div>
             </button>
             <button onclick="switchTab('settings')" class="nav-btn flex-1 flex flex-col items-center gap-1 transition-all" data-tab="settings">
-                <div class="nav-text text-[15px] font-black uppercase tracking-tight">设置</div>
+                <div class="nav-text text-[17px] font-black">设置</div>
                 <div class="nav-dot w-1.5 h-1.5 bg-blue-600 rounded-full opacity-0 scale-0 transition-all"></div>
             </button>
         </nav>
@@ -229,10 +233,23 @@
         };
 
         const INITIAL_LIB = [
-            { id: '1', name: '杠铃深蹲', group: '腿部' }, { id: '2', name: '杠铃卧推', group: '胸部' }, 
-            { id: '3', name: '传统硬拉', group: '背部' }, { id: '4', name: '引体向上', group: '背部' },
-            { id: '5', name: '哑铃弯举', group: '手臂' }, { id: '6', name: '站姿推举', group: '肩部' },
-            { id: '7', name: '跑步', group: '有氧' }
+            { id: '1', name: '杠铃卧推', group: '胸部' }, { id: '2', name: '哑铃卧推', group: '胸部' }, 
+            { id: '3', name: '上斜哑铃卧推', group: '胸部' }, { id: '4', name: '器械夹胸', group: '胸部' },
+            { id: '5', name: '双杠臂屈伸', group: '胸部' },
+            { id: '6', name: '引体向上', group: '背部' }, { id: '7', name: '杠铃划船', group: '背部' }, 
+            { id: '8', name: '高位下拉', group: '背部' }, { id: '9', name: '传统硬拉', group: '背部' },
+            { id: '10', name: '单臂哑铃划船', group: '背部' },
+            { id: '11', name: '杠铃深蹲', group: '腿部' }, { id: '12', name: '腿举', group: '腿部' }, 
+            { id: '13', name: '腿屈伸', group: '腿部' }, { id: '14', name: '腿弯举', group: '腿部' },
+            { id: '15', name: '保加利亚分腿蹲', group: '腿部' },
+            { id: '16', name: '站姿推举', group: '肩部' }, { id: '17', name: '哑铃侧平举', group: '肩部' },
+            { id: '18', name: '哑铃前平举', group: '肩部' }, { id: '19', name: '绳索面拉', group: '肩部' },
+            { id: '20', name: '哑铃弯举', group: '手臂' }, { id: '21', name: '杠铃弯举', group: '手臂' },
+            { id: '22', name: '绳索下压', group: '手臂' }, { id: '23', name: '碎头者', group: '手臂' },
+            { id: '24', name: '悬垂举腿', group: '核心' }, { id: '25', name: '卷腹', group: '核心' },
+            { id: '26', name: '平板支撑', group: '核心' },
+            { id: '27', name: '跑步机', group: '有氧' }, { id: '28', name: '椭圆机', group: '有氧' },
+            { id: '29', name: '动感单车', group: '有氧' }, { id: '30', name: '划船机', group: '有氧' }
         ];
 
         let appState = {
@@ -244,10 +261,9 @@
         const COLORS = { '胸部': '#3b82f6', '背部': '#10b981', '腿部': '#8b5cf6', '肩部': '#f59e0b', '手臂': '#ec4899', '核心': '#ef4444', '有氧': '#06b6d4' };
         let currentMonth = new Date();
         let currentEditLog = null;
-        let charts = { sbd: null, weight: null, fat: null };
+        let charts = { sbd: null, weight: null, fat: null, volume: null };
 
         function init() {
-            document.getElementById('header-date').textContent = new Date().toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', weekday: 'short' }).toUpperCase();
             document.getElementById('header-banner').textContent = appState.banner;
             document.getElementById('settings-banner').value = appState.banner;
             renderHome();
@@ -266,10 +282,10 @@
         function renderLibrary() {
             const list = document.getElementById('lib-list');
             list.innerHTML = appState.library.map(item => `
-                <div class="flex items-center justify-between p-4 bg-white hover:bg-slate-50">
+                <div class="flex items-center justify-between p-4 bg-white hover:bg-slate-50 transition-colors">
                     <div class="flex items-center gap-3">
                         <div class="w-2.5 h-2.5 rounded-full" style="background:${COLORS[item.group] || '#ddd'}"></div>
-                        <div class="text-sm font-black text-slate-800">${item.name}</div>
+                        <div class="text-[14px] font-black text-slate-800">${item.name}</div>
                     </div>
                     <button onclick="deleteLibItem('${item.id}')" class="text-slate-200 text-xl font-bold px-2">×</button>
                 </div>
@@ -277,7 +293,7 @@
         }
 
         window.deleteLibItem = (id) => {
-            if(!confirm('移除此动作？')) return;
+            if(!confirm('确定移除此动作？')) return;
             appState.library = appState.library.filter(i => i.id !== id);
             localStorage.setItem('fitlog_lib_v2', JSON.stringify(appState.library));
             renderLibrary();
@@ -326,27 +342,27 @@
             list.innerHTML = currentEditLog.exercises.map((ex, exIdx) => `
                 <div class="bg-white rounded-[1.5rem] p-5 border-l-[8px] shadow-sm relative" style="border-color:${COLORS[ex.group] || '#ddd'}">
                     <div class="flex justify-between items-center mb-4">
-                        <span class="font-black text-sm text-slate-800">${ex.name}</span>
-                        <button onclick="removeEx(${exIdx})" class="text-red-400 font-black text-[9px] uppercase tracking-widest">移除</button>
+                        <span class="font-black text-[14px] text-slate-800">${ex.name}</span>
+                        <button onclick="removeEx(${exIdx})" class="text-red-400 font-black text-[11px] uppercase">移除</button>
                     </div>
                     <div class="space-y-2">
                         ${ex.sets.map((s, sIdx) => `
                             <div class="grid grid-cols-4 gap-2 items-center">
-                                <span class="bg-slate-50 text-slate-500 font-black h-10 flex items-center justify-center rounded-xl mono text-xs">${sIdx+1}</span>
-                                <input type="number" step="0.5" value="${s.weight}" class="bg-slate-50 h-10 text-center rounded-xl font-black mono outline-none" onchange="updateSetData(${exIdx},${sIdx},'weight',this.value)">
-                                <input type="number" step="1" value="${s.reps}" class="bg-slate-50 h-10 text-center rounded-xl font-black mono outline-none" onchange="updateSetData(${exIdx},${sIdx},'reps',this.value)">
+                                <span class="bg-slate-50 text-slate-500 font-black h-10 flex items-center justify-center rounded-xl mono text-[12px]">${sIdx+1}</span>
+                                <input type="number" step="0.5" value="${s.weight}" class="bg-slate-50 h-10 text-center rounded-xl font-black mono outline-none text-[13px]" onchange="updateSetData(${exIdx},${sIdx},'weight',this.value)">
+                                <input type="number" step="1" value="${s.reps}" class="bg-slate-50 h-10 text-center rounded-xl font-black mono outline-none text-[13px]" onchange="updateSetData(${exIdx},${sIdx},'reps',this.value)">
                                 <button onclick="removeSet(${exIdx},${sIdx})" class="text-slate-200 text-2xl font-bold">×</button>
                             </div>
                         `).join('')}
                     </div>
-                    <button onclick="addSet(${exIdx})" class="w-full mt-4 py-2.5 bg-slate-50 text-[10px] font-black rounded-xl border border-dashed border-slate-200 text-slate-400">+ 新组次</button>
+                    <button onclick="addSet(${exIdx})" class="w-full mt-4 py-2.5 bg-slate-50 text-[11px] font-black rounded-xl border border-dashed border-slate-200 text-slate-400">+ 新组次</button>
                 </div>
             `).join('');
 
             const grid = document.getElementById('edit-lib-grid');
             grid.innerHTML = appState.library.map(item => `
-                <button onclick="quickAddEx('${item.id}')" class="p-3 bg-white rounded-xl text-xs font-black border border-slate-100 shadow-sm text-left active:scale-95 transition-all">
-                    <div class="text-[8px] opacity-30 uppercase mb-0.5" style="color:${COLORS[item.group]}">${item.group}</div>
+                <button onclick="quickAddEx('${item.id}')" class="p-3 bg-white rounded-xl text-[12px] font-black border border-slate-100 shadow-sm text-left active:scale-95 transition-all">
+                    <div class="text-[9px] opacity-30 uppercase mb-0.5" style="color:${COLORS[item.group]}">${item.group}</div>
                     <div class="truncate text-slate-700">${item.name}</div>
                 </button>
             `).join('');
@@ -388,6 +404,12 @@
             renderHome(); closeEditor(false);
         };
 
+        function calculateLogVolume(log) {
+            return log.exercises.reduce((acc, ex) => {
+                return acc + ex.sets.reduce((sAcc, s) => sAcc + (s.weight * s.reps), 0);
+            }, 0);
+        }
+
         function renderHome() {
             const list = document.getElementById('log-list');
             const sorted = [...appState.logs].sort((a,b) => new Date(b.date) - new Date(a.date));
@@ -409,22 +431,22 @@
                         <div class="flex items-center gap-4">
                             <span class="text-4xl">${log.mood}</span>
                             <div>
-                                <h3 class="font-black text-sm text-slate-800">${log.date}</h3>
-                                <p class="text-[9px] font-black text-slate-300 tracking-widest mt-0.5">${log.weight || '--'}KG / ${log.bodyFat || '--'}%</p>
+                                <h3 class="font-black text-[14px] text-slate-800">${log.date}</h3>
+                                <p class="text-[10px] font-black text-slate-300 tracking-widest mt-0.5 uppercase">容量: ${calculateLogVolume(log)}kg | ${log.weight || '--'}kg</p>
                             </div>
                         </div>
-                        <button onclick="openEditor('${log.id}')" class="px-4 py-1.5 text-blue-600 font-black text-[10px] bg-blue-50 rounded-full">编辑</button>
+                        <button onclick="openEditor('${log.id}')" class="px-4 py-1.5 text-blue-600 font-black text-[11px] bg-blue-50 rounded-full">编辑</button>
                     </div>
                     <div class="space-y-2">
                         ${log.exercises.map(ex => `
                             <div class="bg-slate-50 p-3 rounded-xl flex items-center justify-between">
                                 <div class="flex-1">
-                                    <div class="text-xs font-black text-slate-800">${ex.name}</div>
+                                    <div class="text-[13px] font-black text-slate-800">${ex.name}</div>
                                     <div class="flex flex-wrap gap-1 mt-1">
-                                        ${ex.sets.map(s => `<span class="bg-white px-1.5 py-0.5 rounded-lg border border-slate-200 text-[9px] font-black mono text-slate-500">${s.weight}×${s.reps}</span>`).join('')}
+                                        ${ex.sets.map(s => `<span class="bg-white px-1.5 py-0.5 rounded-lg border border-slate-200 text-[10px] font-black mono text-slate-500">${s.weight}×${s.reps}</span>`).join('')}
                                     </div>
                                 </div>
-                                <span class="text-[8px] font-black px-1.5 py-0.5 rounded-full text-white shrink-0" style="background:${COLORS[ex.group] || '#ddd'}">${ex.group}</span>
+                                <span class="text-[9px] font-black px-1.5 py-0.5 rounded-full text-white shrink-0" style="background:${COLORS[ex.group] || '#ddd'}">${ex.group}</span>
                             </div>
                         `).join('')}
                     </div>
@@ -451,12 +473,20 @@
                 if(ex.name.includes('卧推')) prs.b = Math.max(prs.b, max);
                 if(ex.name.includes('硬拉')) prs.d = Math.max(prs.d, max);
             }));
-            document.getElementById('pr-squat').textContent = prs.s ? prs.s : '--';
-            document.getElementById('pr-bench').textContent = prs.b ? prs.b : '--';
-            document.getElementById('pr-deadlift').textContent = prs.d ? prs.d : '--';
+            document.getElementById('pr-squat').textContent = prs.s || '--';
+            document.getElementById('pr-bench').textContent = prs.b || '--';
+            document.getElementById('pr-deadlift').textContent = prs.d || '--';
 
-            const recent = logs.slice(-10);
+            const recent = logs.slice(-12);
             const labels = recent.map(l => l.date.slice(5));
+
+            // 容量图表
+            if(charts.volume) charts.volume.destroy();
+            charts.volume = new Chart(document.getElementById('volume-chart'), {
+                type: 'bar',
+                data: { labels, datasets: [{ label: '容量', data: recent.map(l => calculateLogVolume(l)), backgroundColor: 'rgba(59, 130, 246, 0.4)', borderRadius: 8 }] },
+                options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+            });
 
             if(charts.sbd) charts.sbd.destroy();
             charts.sbd = new Chart(document.getElementById('sbd-chart'), {
@@ -471,14 +501,14 @@
             if(charts.weight) charts.weight.destroy();
             charts.weight = new Chart(document.getElementById('weight-chart'), {
                 type: 'line',
-                data: { labels, datasets: [{ data: recent.map(l => l.weight), borderColor: '#f97316', backgroundColor: '#fff7ed', fill: true, tension: 0.4 }] },
+                data: { labels, datasets: [{ data: recent.map(l => l.weight), borderColor: '#f97316', backgroundColor: 'rgba(249, 115, 22, 0.1)', fill: true, tension: 0.4 }] },
                 options: { plugins: { legend: { display: false } } }
             });
 
             if(charts.fat) charts.fat.destroy();
             charts.fat = new Chart(document.getElementById('fat-chart'), {
                 type: 'line',
-                data: { labels, datasets: [{ data: recent.map(l => l.bodyFat), borderColor: '#ec4899', backgroundColor: '#fdf2f8', fill: true, tension: 0.4 }] },
+                data: { labels, datasets: [{ data: recent.map(l => l.bodyFat), borderColor: '#ec4899', backgroundColor: 'rgba(236, 72, 153, 0.1)', fill: true, tension: 0.4 }] },
                 options: { plugins: { legend: { display: false } } }
             });
         }
@@ -489,23 +519,49 @@
             const names = ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"];
             document.getElementById('calendar-title').innerHTML = `${y}年 ${names[m]}`;
             const first = new Date(y, m, 1).getDay();
-            const days = new Date(y, m+1, 0).getDate();
+            const daysCount = new Date(y, m+1, 0).getDate();
             for(let i=0; i<first; i++) grid.appendChild(document.createElement('div'));
-            for(let d=1; d<=days; d++) {
+            
+            for(let d=1; d<=daysCount; d++) {
                 const dayDiv = document.createElement('div');
                 const iso = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-                const hasLog = appState.logs.some(l => l.date === iso);
-                dayDiv.className = `h-10 flex items-center justify-center text-xs rounded-xl cursor-pointer ${hasLog ? 'bg-blue-600 text-white font-black' : 'text-slate-400 hover:bg-slate-50'}`;
-                dayDiv.textContent = d;
-                dayDiv.onclick = () => {
-                    const logsAtDay = appState.logs.filter(l => l.date === iso);
-                    const detail = document.getElementById('calendar-detail');
-                    detail.innerHTML = logsAtDay.length ? logsAtDay.map(log => `
-                        <div class="bg-white p-5 rounded-2xl mt-3 shadow-sm flex justify-between items-center">
-                            <div class="flex items-center gap-3"><span class="text-3xl">${log.mood}</span><div><div class="font-black text-slate-800 text-sm">${log.date}</div></div></div>
-                            <button onclick="openEditor('${log.id}')" class="bg-slate-50 px-4 py-2 rounded-xl text-blue-600 font-black text-[10px]">查看</button>
+                const dayLogs = appState.logs.filter(l => l.date === iso);
+                const hasLog = dayLogs.length > 0;
+                
+                // 找出主练部位（出现次数最多的部位）
+                let mainGroup = "";
+                if (hasLog) {
+                    const groupCounts = {};
+                    dayLogs.forEach(log => log.exercises.forEach(ex => {
+                        groupCounts[ex.group] = (groupCounts[ex.group] || 0) + 1;
+                    }));
+                    mainGroup = Object.entries(groupCounts).sort((a,b) => b[1] - a[1])[0][0];
+                }
+
+                dayDiv.className = `flex flex-col items-center justify-start min-h-[50px] py-1 rounded-xl cursor-pointer transition-all ${hasLog ? 'bg-slate-50 border border-slate-100' : 'hover:bg-slate-50'}`;
+                dayDiv.innerHTML = `
+                    <span class="text-[12px] font-black ${hasLog ? 'text-blue-600' : 'text-slate-400'}">${d}</span>
+                    ${hasLog ? `
+                        <div class="mt-1 w-full px-1 flex flex-col items-center gap-0.5">
+                            <div class="w-2 h-2 rounded-full" style="background:${COLORS[mainGroup]}"></div>
+                            <span class="text-[8px] font-bold text-slate-400 scale-90 whitespace-nowrap">${calculateLogVolume(dayLogs[0])}kg</span>
                         </div>
-                    `).join('') : '<div class="p-10 text-center text-slate-300 text-xs italic">今日无记录</div>';
+                    ` : ''}
+                `;
+                dayDiv.onclick = () => {
+                    const detail = document.getElementById('calendar-detail');
+                    detail.innerHTML = dayLogs.length ? dayLogs.map(log => `
+                        <div class="bg-white p-5 rounded-2xl mt-3 shadow-sm flex justify-between items-center group active:scale-95 transition-all">
+                            <div class="flex items-center gap-3">
+                                <span class="text-3xl">${log.mood}</span>
+                                <div>
+                                    <div class="font-black text-slate-800 text-[14px]">${log.date} 训练日</div>
+                                    <div class="text-[10px] font-bold text-slate-400 uppercase mt-0.5">主练部位: ${mainGroup} | 容量: ${calculateLogVolume(log)}kg</div>
+                                </div>
+                            </div>
+                            <button onclick="openEditor('${log.id}')" class="bg-blue-50 px-4 py-2 rounded-xl text-blue-600 font-black text-[11px]">查看详情</button>
+                        </div>
+                    `).join('') : '<div class="p-10 text-center text-slate-300 text-[12px] italic">今日给自己放了个假 💤</div>';
                 };
                 grid.appendChild(dayDiv);
             }
@@ -516,25 +572,26 @@
             appState.banner = document.getElementById('settings-banner').value; 
             localStorage.setItem('fitlog_banner', appState.banner); 
             document.getElementById('header-banner').textContent = appState.banner;
-            alert('保存成功');
+            alert('标语更新成功 ✨');
         };
 
         window.exportMarkdown = () => {
-            let md = "# FitLog 训练导出\n\n";
+            let md = "# FitLog 训练日志导出\n\n";
             [...appState.logs].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(l => {
-                md += `## ${l.date} ${l.mood}\n- 体重: ${l.weight || '--'}kg / 体脂: ${l.bodyFat || '--'}%\n`;
+                md += `## ${l.date} ${l.mood}\n- 总容量: ${calculateLogVolume(l)}kg\n- 体重: ${l.weight || '--'}kg / 体脂: ${l.bodyFat || '--'}%\n`;
                 l.exercises.forEach(ex => {
-                    md += `### ${ex.name}\n`;
-                    ex.sets.forEach((s, i) => md += `- 组${i+1}: ${s.weight}kg x ${s.reps}\n`);
+                    md += `### ${ex.name} (${ex.group})\n`;
+                    ex.sets.forEach((s, i) => md += `- 组${i+1}: ${s.weight}kg x ${s.reps}次\n`);
                 });
+                if(l.notes) md += `\n> 📝 备注: ${l.notes}\n`;
                 md += `\n---\n\n`;
             });
             const blob = new Blob([md], {type:'text/markdown'});
             const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-            a.download = `FitLog_${getLocalToday()}.md`; a.click();
+            a.download = `FitLog_Export_${getLocalToday()}.md`; a.click();
         };
 
-        window.clearData = () => { if(confirm('清空所有数据？')) { localStorage.clear(); location.reload(); } };
+        window.clearData = () => { if(confirm('⚠️ 确定要清空所有数据吗？此操作无法撤销。')) { localStorage.clear(); location.reload(); } };
 
         init();
     </script>
