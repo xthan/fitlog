@@ -178,12 +178,12 @@
             
             <div class="flex-1 overflow-y-auto px-4 py-6 space-y-6 bg-slate-50/50 pb-32">
                 <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm"><label class="text-[10px] text-slate-400 font-black block mb-1">日期</label><input type="date" id="edit-date" class="w-full text-[13px] font-black outline-none bg-transparent" onchange="syncCurrentInputsToState()"></div>
-                    <div class="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm"><label class="text-[10px] text-slate-400 font-black block mb-1">心情反馈</label><select id="edit-mood" class="w-full text-[15px] font-black outline-none bg-transparent" onchange="syncCurrentInputsToState()"><option>😊</option><option>🔥</option><option>😴</option><option>😤</option><option>🤕</option></select></div>
+                    <div class="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm"><label class="text-[10px] text-slate-400 font-black block mb-1">日期</label><input type="date" id="edit-date" class="w-full text-[13px] font-black outline-none bg-transparent" oninput="handleEditorInput()"></div>
+                    <div class="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm"><label class="text-[10px] text-slate-400 font-black block mb-1">心情反馈</label><select id="edit-mood" class="w-full text-[15px] font-black outline-none bg-transparent" oninput="handleEditorInput()"><option>😊</option><option>🔥</option><option>😴</option><option>😤</option><option>🤕</option></select></div>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm"><label class="text-[10px] text-slate-400 font-black block mb-1">体重 (KG)</label><input type="number" step="0.1" id="edit-weight" class="w-full text-[13px] font-black outline-none bg-transparent mono" placeholder="0.0" onchange="syncCurrentInputsToState()"></div>
-                    <div class="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm"><label class="text-[10px] text-slate-400 font-black block mb-1">体脂 (%)</label><input type="number" step="0.1" id="edit-fat" class="w-full text-[13px] font-black outline-none bg-transparent mono" placeholder="0.0" onchange="syncCurrentInputsToState()"></div>
+                    <div class="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm"><label class="text-[10px] text-slate-400 font-black block mb-1">体重 (KG)</label><input type="number" step="0.1" id="edit-weight" class="w-full text-[13px] font-black outline-none bg-transparent mono" placeholder="0.0" oninput="handleEditorInput()"></div>
+                    <div class="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm"><label class="text-[10px] text-slate-400 font-black block mb-1">体脂 (%)</label><input type="number" step="0.1" id="edit-fat" class="w-full text-[13px] font-black outline-none bg-transparent mono" placeholder="0.0" oninput="handleEditorInput()"></div>
                 </div>
                 
                 <div id="edit-exercises" class="space-y-4"></div>
@@ -193,7 +193,7 @@
                     <div id="edit-lib-grid" class="grid grid-cols-2 gap-2"></div>
                 </div>
                 
-                <textarea id="edit-notes" placeholder="记录此刻的心情或备注..." class="w-full bg-white p-5 rounded-[1.5rem] border border-slate-100 min-h-[100px] text-[13px] font-bold outline-none" onchange="syncCurrentInputsToState()"></textarea>
+                <textarea id="edit-notes" placeholder="记录此刻的心情或备注..." class="w-full bg-white p-5 rounded-[1.5rem] border border-slate-100 min-h-[100px] text-[13px] font-bold outline-none" oninput="handleEditorInput()"></textarea>
 
                 <button id="delete-log-btn" onclick="confirmDeleteCurrentLog()" class="w-full py-4 bg-white text-red-500 rounded-2xl font-black border border-red-50 text-[13px] hidden">
                     删除本条记录
@@ -255,7 +255,7 @@
         let appState = {
             logs: JSON.parse(localStorage.getItem('fitlog_v2_data') || '[]'),
             library: JSON.parse(localStorage.getItem('fitlog_lib_v2') || JSON.stringify(INITIAL_LIB)),
-            banner: localStorage.getItem('fitlog_banner') || '记录蜕变，见证更强的自己！'
+            banner: localStorage.getItem('fitlog_banner') || '因吹斯汀！'
         };
 
         const COLORS = { '胸部': '#3b82f6', '背部': '#10b981', '腿部': '#8b5cf6', '肩部': '#f59e0b', '手臂': '#ec4899', '核心': '#ef4444', '有氧': '#06b6d4' };
@@ -267,6 +267,30 @@
             document.getElementById('header-banner').textContent = appState.banner;
             document.getElementById('settings-banner').value = appState.banner;
             renderHome();
+            
+            // 启动时检查是否有草稿
+            const draft = localStorage.getItem('fitlog_editor_draft');
+            if (draft) {
+                const draftData = JSON.parse(draft);
+                // 询问用户是否恢复，或者直接默认显示。这里选择直接恢复草稿逻辑
+                console.log('检测到草稿，已备用');
+            }
+        }
+
+        // 统一处理编辑器输入，触发草稿保存
+        function handleEditorInput() {
+            syncCurrentInputsToState();
+            saveDraft();
+        }
+
+        function saveDraft() {
+            if (currentEditLog) {
+                localStorage.setItem('fitlog_editor_draft', JSON.stringify(currentEditLog));
+            }
+        }
+
+        function clearDraft() {
+            localStorage.removeItem('fitlog_editor_draft');
         }
 
         function addLibraryItem() {
@@ -314,11 +338,18 @@
             setTimeout(() => overlay.style.transform = 'translateY(0)', 10);
             
             const deleteBtn = document.getElementById('delete-log-btn');
-            if(id) {
+            
+            // 逻辑：如果是新记录，先看有没有草稿
+            if (id) {
                 currentEditLog = JSON.parse(JSON.stringify(appState.logs.find(l => l.id === id)));
                 deleteBtn.classList.remove('hidden');
             } else {
-                currentEditLog = { id: Date.now().toString(), date: getLocalToday(), exercises: [], mood: '😊', weight: null, bodyFat: null, notes: '' };
+                const draft = localStorage.getItem('fitlog_editor_draft');
+                if (draft) {
+                    currentEditLog = JSON.parse(draft);
+                } else {
+                    currentEditLog = { id: Date.now().toString(), date: getLocalToday(), exercises: [], mood: '😊', weight: null, bodyFat: null, notes: '' };
+                }
                 deleteBtn.classList.add('hidden');
             }
             
@@ -331,7 +362,8 @@
         };
 
         window.closeEditor = (confirmCancel) => {
-            if(confirmCancel && currentEditLog.exercises.length > 0 && !confirm('放弃当前编辑？')) return;
+            // 优化：取消编辑不应该清除草稿，除非用户确认放弃。
+            // 这里我们默认保留草稿，直到用户显式保存
             const overlay = document.getElementById('editor-overlay');
             overlay.style.transform = 'translateY(100%)';
             setTimeout(() => overlay.classList.add('hidden'), 500);
@@ -349,8 +381,8 @@
                         ${ex.sets.map((s, sIdx) => `
                             <div class="grid grid-cols-4 gap-2 items-center">
                                 <span class="bg-slate-50 text-slate-500 font-black h-10 flex items-center justify-center rounded-xl mono text-[12px]">${sIdx+1}</span>
-                                <input type="number" step="0.5" value="${s.weight}" class="bg-slate-50 h-10 text-center rounded-xl font-black mono outline-none text-[13px]" onchange="updateSetData(${exIdx},${sIdx},'weight',this.value)">
-                                <input type="number" step="1" value="${s.reps}" class="bg-slate-50 h-10 text-center rounded-xl font-black mono outline-none text-[13px]" onchange="updateSetData(${exIdx},${sIdx},'reps',this.value)">
+                                <input type="number" step="0.5" value="${s.weight}" class="bg-slate-50 h-10 text-center rounded-xl font-black mono outline-none text-[13px]" oninput="updateSetData(${exIdx},${sIdx},'weight',this.value)">
+                                <input type="number" step="1" value="${s.reps}" class="bg-slate-50 h-10 text-center rounded-xl font-black mono outline-none text-[13px]" oninput="updateSetData(${exIdx},${sIdx},'reps',this.value)">
                                 <button onclick="removeSet(${exIdx},${sIdx})" class="text-slate-200 text-2xl font-bold">×</button>
                             </div>
                         `).join('')}
@@ -368,24 +400,38 @@
             `).join('');
         }
 
-        window.updateSetData = (exIdx, sIdx, field, val) => { currentEditLog.exercises[exIdx].sets[sIdx][field] = parseFloat(val) || 0; };
+        window.updateSetData = (exIdx, sIdx, field, val) => { 
+            currentEditLog.exercises[exIdx].sets[sIdx][field] = parseFloat(val) || 0; 
+            saveDraft();
+        };
         window.addSet = (idx) => { 
             syncCurrentInputsToState();
             const ex = currentEditLog.exercises[idx];
             const last = ex.sets[ex.sets.length - 1];
             ex.sets.push({ weight: last ? last.weight : 0, reps: last ? last.reps : 0 });
             syncEditorUI();
+            saveDraft();
         };
         window.removeSet = (exIdx, sIdx) => { 
             syncCurrentInputsToState();
-            if(currentEditLog.exercises[exIdx].sets.length > 1) { currentEditLog.exercises[exIdx].sets.splice(sIdx, 1); syncEditorUI(); } 
+            if(currentEditLog.exercises[exIdx].sets.length > 1) { 
+                currentEditLog.exercises[exIdx].sets.splice(sIdx, 1); 
+                syncEditorUI(); 
+                saveDraft();
+            } 
         };
-        window.removeEx = (idx) => { syncCurrentInputsToState(); currentEditLog.exercises.splice(idx, 1); syncEditorUI(); };
+        window.removeEx = (idx) => { 
+            syncCurrentInputsToState(); 
+            currentEditLog.exercises.splice(idx, 1); 
+            syncEditorUI(); 
+            saveDraft();
+        };
         window.quickAddEx = (libId) => {
             syncCurrentInputsToState();
             const item = appState.library.find(i => i.id === libId);
             currentEditLog.exercises.push({ ...item, sets: [{ weight: 0, reps: 0 }] });
             syncEditorUI();
+            saveDraft();
         };
 
         window.saveWorkout = () => {
@@ -394,6 +440,7 @@
             const idx = appState.logs.findIndex(l => l.id === currentEditLog.id);
             if(idx > -1) appState.logs[idx] = currentEditLog; else appState.logs.push(currentEditLog);
             localStorage.setItem('fitlog_v2_data', JSON.stringify(appState.logs));
+            clearDraft(); // 保存成功，清空草稿
             renderHome(); closeEditor(false);
         };
 
@@ -401,6 +448,7 @@
             if(!confirm('确定删除此记录？')) return;
             appState.logs = appState.logs.filter(l => l.id !== currentEditLog.id);
             localStorage.setItem('fitlog_v2_data', JSON.stringify(appState.logs));
+            clearDraft();
             renderHome(); closeEditor(false);
         };
 
@@ -447,13 +495,15 @@
                     <div class="space-y-2">
                         ${log.exercises.map(ex => `
                             <div class="bg-slate-50 p-3 rounded-xl flex items-center justify-between">
-                                <div class="flex-1">
-                                    <div class="text-[13px] font-black text-slate-800">${ex.name}</div>
-                                    <div class="flex flex-wrap gap-1 mt-1">
-                                        ${ex.sets.map(s => `<span class="bg-white px-1.5 py-0.5 rounded-lg border border-slate-200 text-[10px] font-black mono text-slate-500">${s.weight}×${s.reps}</span>`).join('')}
+                                <div class="flex-1 flex flex-col gap-1">
+                                    <div class="flex items-center justify-between">
+                                        <div class="text-[13px] font-black text-slate-800">${ex.name}</div>
+                                        <div class="flex flex-wrap gap-1">
+                                            ${ex.sets.map(s => `<span class="bg-white px-1.5 py-0.5 rounded-lg border border-slate-200 text-[10px] font-black mono text-slate-500">${s.weight}×${s.reps}</span>`).join('')}
+                                        </div>
                                     </div>
                                 </div>
-                                <span class="text-[9px] font-black px-1.5 py-0.5 rounded-full text-white shrink-0" style="background:${COLORS[ex.group] || '#ddd'}">${ex.group}</span>
+                                <span class="text-[9px] font-black px-1.5 py-0.5 rounded-full text-white shrink-0 ml-3" style="background:${COLORS[ex.group] || '#ddd'}">${ex.group}</span>
                             </div>
                         `).join('')}
                     </div>
