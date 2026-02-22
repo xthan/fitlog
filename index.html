@@ -7,6 +7,8 @@
     <title>FitLog | 悦动记录</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
     <style>
         :root { 
@@ -27,6 +29,7 @@
         main { padding-bottom: calc(100px + var(--safe-bottom)); }
         .header-pt { padding-top: calc(1.2rem + var(--safe-top)); }
     </style>
+<link rel="stylesheet" href="/index.css">
 </head>
 <body class="text-slate-900 overflow-hidden">
     <div class="flex flex-col h-screen max-w-2xl mx-auto bg-white shadow-2xl relative overflow-hidden">
@@ -102,6 +105,79 @@
                 </div>
             </div>
 
+            <!-- 睡眠 -->
+            <div id="tab-sleep" class="tab-content p-4 space-y-6">
+                <div class="bg-white rounded-[2rem] p-6 border border-slate-100 card-shadow space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-xl font-black text-slate-800">睡眠记录</h2>
+                        <input type="date" id="sleep-tab-date" class="text-[12px] font-black bg-slate-50 px-3 py-1.5 rounded-lg outline-none" onchange="loadSleepDataForDate(this.value)">
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label class="text-[10px] text-slate-400 font-black block uppercase tracking-wider">入睡时间</label>
+                            <div class="flex items-center gap-1 bg-slate-50 rounded-xl p-2 justify-center">
+                                <input type="text" id="sleep-tab-start-h" class="w-10 bg-transparent text-center font-black mono outline-none cursor-ns-resize" readonly onwheel="handleWheel(event, 'sleep-tab-start-h', 23)">
+                                <span class="font-black">:</span>
+                                <input type="text" id="sleep-tab-start-m" class="w-10 bg-transparent text-center font-black mono outline-none cursor-ns-resize" readonly onwheel="handleWheel(event, 'sleep-tab-start-m', 59)">
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] text-slate-400 font-black block uppercase tracking-wider">醒来时间</label>
+                            <div class="flex items-center gap-1 bg-slate-50 rounded-xl p-2 justify-center">
+                                <input type="text" id="sleep-tab-end-h" class="w-10 bg-transparent text-center font-black mono outline-none cursor-ns-resize" readonly onwheel="handleWheel(event, 'sleep-tab-end-h', 23)">
+                                <span class="font-black">:</span>
+                                <input type="text" id="sleep-tab-end-m" class="w-10 bg-transparent text-center font-black mono outline-none cursor-ns-resize" readonly onwheel="handleWheel(event, 'sleep-tab-end-m', 59)">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="bg-slate-50 p-2 rounded-xl text-center">
+                            <label class="text-[9px] text-slate-400 font-black block mb-1">梦境</label>
+                            <input type="number" id="sleep-tab-dreams" class="w-full bg-transparent text-center font-black mono outline-none" value="0">
+                        </div>
+                        <div class="bg-slate-50 p-2 rounded-xl text-center">
+                            <label class="text-[9px] text-slate-400 font-black block mb-1">中途醒来</label>
+                            <input type="number" id="sleep-tab-wakes" class="w-full bg-transparent text-center font-black mono outline-none" value="0">
+                        </div>
+                        <div class="bg-slate-50 p-2 rounded-xl text-center">
+                            <label class="text-[9px] text-slate-400 font-black block mb-1">体感</label>
+                            <select id="sleep-tab-tiredness" class="w-full bg-transparent text-center font-black outline-none text-[12px]">
+                                <option value="refreshed">精神</option>
+                                <option value="normal" selected>正常</option>
+                                <option value="tired">疲惫</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button onclick="saveSleepFromTab()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-black text-[13px] active:scale-95 transition-all">保存睡眠记录</button>
+                </div>
+
+                <div class="bg-white rounded-[1.5rem] p-5 card-shadow border border-slate-100">
+                    <h3 class="text-[13px] font-black text-slate-800 mb-3 text-purple-500">睡眠时长趋势 (小时)</h3>
+                    <canvas id="sleep-chart" height="150"></canvas>
+                </div>
+
+                <div class="bg-white rounded-[2rem] p-6 border border-slate-100 card-shadow">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 id="sleep-calendar-title" class="text-xl font-black text-slate-800">睡眠质量日历</h2>
+                        <div class="flex gap-2">
+                            <button onclick="changeSleepMonth(-1)" class="w-8 h-8 flex items-center justify-center bg-slate-50 rounded-lg text-slate-500">←</button>
+                            <button onclick="changeSleepMonth(1)" class="w-8 h-8 flex items-center justify-center bg-slate-50 rounded-lg text-slate-500">→</button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-black text-slate-300 mb-2">
+                        <div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div>
+                    </div>
+                    <div id="sleep-calendar-days" class="grid grid-cols-7 gap-y-3 gap-x-1 text-center"></div>
+                    <div class="mt-4 flex justify-center gap-4 text-[10px] font-bold">
+                        <div class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-emerald-400"></div>精神</div>
+                        <div class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-blue-400"></div>正常</div>
+                        <div class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-amber-400"></div>疲惫</div>
+                    </div>
+                </div>
+            </div>
+
             <!-- 动作库 -->
             <div id="tab-library" class="tab-content p-4 space-y-4">
                 <div class="bg-white p-6 rounded-[2rem] card-shadow border border-slate-100">
@@ -170,6 +246,47 @@
                     <div class="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm"><label class="text-[10px] text-slate-400 font-black block mb-1">体重 (KG)</label><input type="number" step="0.1" id="edit-weight" class="w-full text-[13px] font-black outline-none bg-transparent mono" placeholder="0.0" oninput="handleEditorInput()"></div>
                     <div class="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm"><label class="text-[10px] text-slate-400 font-black block mb-1">体脂 (%)</label><input type="number" step="0.1" id="edit-fat" class="w-full text-[13px] font-black outline-none bg-transparent mono" placeholder="0.0" oninput="handleEditorInput()"></div>
                 </div>
+
+                <!-- Sleep Section -->
+                <div class="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm space-y-4">
+                    <h3 class="font-black text-slate-800 text-base">睡眠记录</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label class="text-[10px] text-slate-400 font-black block uppercase tracking-wider">入睡时间 (滚轮调整)</label>
+                            <div class="flex items-center gap-1 bg-slate-50 rounded-xl p-2 justify-center">
+                                <input type="text" id="sleep-start-h" class="w-10 bg-transparent text-center font-black mono outline-none cursor-ns-resize" readonly onwheel="handleWheel(event, 'sleep-start-h', 23)" onclick="this.focus()">
+                                <span class="font-black">:</span>
+                                <input type="text" id="sleep-start-m" class="w-10 bg-transparent text-center font-black mono outline-none cursor-ns-resize" readonly onwheel="handleWheel(event, 'sleep-start-m', 59)" onclick="this.focus()">
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] text-slate-400 font-black block uppercase tracking-wider">醒来时间 (滚轮调整)</label>
+                            <div class="flex items-center gap-1 bg-slate-50 rounded-xl p-2 justify-center">
+                                <input type="text" id="sleep-end-h" class="w-10 bg-transparent text-center font-black mono outline-none cursor-ns-resize" readonly onwheel="handleWheel(event, 'sleep-end-h', 23)" onclick="this.focus()">
+                                <span class="font-black">:</span>
+                                <input type="text" id="sleep-end-m" class="w-10 bg-transparent text-center font-black mono outline-none cursor-ns-resize" readonly onwheel="handleWheel(event, 'sleep-end-m', 59)" onclick="this.focus()">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="bg-slate-50 p-2 rounded-xl text-center">
+                            <label class="text-[9px] text-slate-400 font-black block mb-1">梦境</label>
+                            <input type="number" id="sleep-dreams" class="w-full bg-transparent text-center font-black mono outline-none" value="0" oninput="handleEditorInput()">
+                        </div>
+                        <div class="bg-slate-50 p-2 rounded-xl text-center">
+                            <label class="text-[9px] text-slate-400 font-black block mb-1">中途醒来</label>
+                            <input type="number" id="sleep-wakes" class="w-full bg-transparent text-center font-black mono outline-none" value="0" oninput="handleEditorInput()">
+                        </div>
+                        <div class="bg-slate-50 p-2 rounded-xl text-center">
+                            <label class="text-[9px] text-slate-400 font-black block mb-1">体感</label>
+                            <select id="sleep-tiredness" class="w-full bg-transparent text-center font-black outline-none text-[12px]" oninput="handleEditorInput()">
+                                <option value="refreshed">精神</option>
+                                <option value="normal" selected>正常</option>
+                                <option value="tired">疲惫</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
                 <div id="edit-exercises" class="space-y-4"></div>
                 <div class="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm">
                     <h3 class="font-black text-slate-800 text-base mb-4">常用动作库</h3>
@@ -181,11 +298,12 @@
         </div>
 
         <nav class="flex justify-around items-center bg-white/95 backdrop-blur-xl border-t border-slate-100 absolute bottom-0 w-full z-50">
-            <button onclick="switchTab('home')" class="nav-btn active-nav flex-1 flex flex-col items-center gap-1 transition-all" data-tab="home"><div class="nav-text text-[17px] font-black">首页</div><div class="nav-dot w-1.5 h-1.5 bg-blue-600 rounded-full opacity-0 scale-0 transition-all"></div></button>
-            <button onclick="switchTab('calendar')" class="nav-btn flex-1 flex flex-col items-center gap-1 transition-all" data-tab="calendar"><div class="nav-text text-[17px] font-black">日历</div><div class="nav-dot w-1.5 h-1.5 bg-blue-600 rounded-full opacity-0 scale-0 transition-all"></div></button>
-            <button onclick="switchTab('stats')" class="nav-btn flex-1 flex flex-col items-center gap-1 transition-all" data-tab="stats"><div class="nav-text text-[17px] font-black">统计</div><div class="nav-dot w-1.5 h-1.5 bg-blue-600 rounded-full opacity-0 scale-0 transition-all"></div></button>
-            <button onclick="switchTab('library')" class="nav-btn flex-1 flex flex-col items-center gap-1 transition-all" data-tab="library"><div class="nav-text text-[17px] font-black">动作库</div><div class="nav-dot w-1.5 h-1.5 bg-blue-600 rounded-full opacity-0 scale-0 transition-all"></div></button>
-            <button onclick="switchTab('settings')" class="nav-btn flex-1 flex flex-col items-center gap-1 transition-all" data-tab="settings"><div class="nav-text text-[17px] font-black">设置</div><div class="nav-dot w-1.5 h-1.5 bg-blue-600 rounded-full opacity-0 scale-0 transition-all"></div></button>
+            <button onclick="switchTab('home')" class="nav-btn active-nav flex-1 flex flex-col items-center gap-1 transition-all" data-tab="home"><div class="nav-text text-[15px] font-black">首页</div><div class="nav-dot w-1.5 h-1.5 bg-blue-600 rounded-full opacity-0 scale-0 transition-all"></div></button>
+            <button onclick="switchTab('calendar')" class="nav-btn flex-1 flex flex-col items-center gap-1 transition-all" data-tab="calendar"><div class="nav-text text-[15px] font-black">日历</div><div class="nav-dot w-1.5 h-1.5 bg-blue-600 rounded-full opacity-0 scale-0 transition-all"></div></button>
+            <button onclick="switchTab('sleep')" class="nav-btn flex-1 flex flex-col items-center gap-1 transition-all" data-tab="sleep"><div class="nav-text text-[15px] font-black">睡眠</div><div class="nav-dot w-1.5 h-1.5 bg-blue-600 rounded-full opacity-0 scale-0 transition-all"></div></button>
+            <button onclick="switchTab('stats')" class="nav-btn flex-1 flex flex-col items-center gap-1 transition-all" data-tab="stats"><div class="nav-text text-[15px] font-black">统计</div><div class="nav-dot w-1.5 h-1.5 bg-blue-600 rounded-full opacity-0 scale-0 transition-all"></div></button>
+            <button onclick="switchTab('library')" class="nav-btn flex-1 flex flex-col items-center gap-1 transition-all" data-tab="library"><div class="nav-text text-[15px] font-black">动作库</div><div class="nav-dot w-1.5 h-1.5 bg-blue-600 rounded-full opacity-0 scale-0 transition-all"></div></button>
+            <button onclick="switchTab('settings')" class="nav-btn flex-1 flex flex-col items-center gap-1 transition-all" data-tab="settings"><div class="nav-text text-[15px] font-black">设置</div><div class="nav-dot w-1.5 h-1.5 bg-blue-600 rounded-full opacity-0 scale-0 transition-all"></div></button>
         </nav>
     </div>
 
@@ -219,10 +337,79 @@
             banner: localStorage.getItem('fitlog_banner') || '记录蜕变，见证更强的自己！'
         };
 
-        const COLORS = { '胸部': '#3b82f6', '背部': '#10b981', '腿部': '#8b5cf6', '肩部': '#f59e0b', '手臂': '#ec4899', '核心': '#ef4444', '有氧': '#06b6d4' };
+        const COLORS = { '胸部': '#3b82f6', '背部': '#10b981', '腿部': '#8b5cf6', '肩部': '#f59e0b', '手臂': '#ec4899', '核心': '#ef4444', '有氧': '#06b6d4', '睡眠': '#8b5cf6' };
         let currentMonth = new Date();
+        let currentSleepMonth = new Date();
         let currentEditLog = null;
-        let charts = { sbd: null, weight: null, fat: null, volume: null };
+        let charts = { sbd: null, weight: null, fat: null, volume: null, sleep: null };
+
+        window.handleWheel = (e, id, max) => {
+            e.preventDefault();
+            const input = document.getElementById(id);
+            let val = parseInt(input.value) || 0;
+            if (e.deltaY < 0) val++; else val--;
+            if (val > max) val = 0;
+            if (val < 0) val = max;
+            input.value = String(val).padStart(2, '0');
+            if (id.includes('tab')) {
+                // No auto-save for tab inputs to avoid partial data
+            } else {
+                handleEditorInput();
+            }
+        };
+
+        function calculateSleepDuration(sleep) {
+            if (!sleep || !sleep.start || !sleep.end) return 0;
+            const start = sleep.start.split(':').map(Number);
+            const end = sleep.end.split(':').map(Number);
+            let diff = (end[0] * 60 + end[1]) - (start[0] * 60 + start[1]);
+            if (diff < 0) diff += 24 * 60;
+            return (diff / 60).toFixed(1);
+        }
+
+        window.loadSleepDataForDate = (date) => {
+            const log = appState.logs.find(l => l.date === date);
+            const sleep = log?.sleep || { start: '01:00', end: '09:05', dreams: 0, wakes: 0, tiredness: 'normal' };
+            const [sh, sm] = sleep.start.split(':');
+            const [eh, em] = sleep.end.split(':');
+            document.getElementById('sleep-tab-start-h').value = sh;
+            document.getElementById('sleep-tab-start-m').value = sm;
+            document.getElementById('sleep-tab-end-h').value = eh;
+            document.getElementById('sleep-tab-end-m').value = em;
+            document.getElementById('sleep-tab-dreams').value = sleep.dreams;
+            document.getElementById('sleep-tab-wakes').value = sleep.wakes;
+            document.getElementById('sleep-tab-tiredness').value = sleep.tiredness;
+        };
+
+        window.saveSleepFromTab = () => {
+            const date = document.getElementById('sleep-tab-date').value;
+            if (!date) return alert('请选择日期');
+            let log = appState.logs.find(l => l.date === date);
+            const sleepData = {
+                start: `${document.getElementById('sleep-tab-start-h').value}:${document.getElementById('sleep-tab-start-m').value}`,
+                end: `${document.getElementById('sleep-tab-end-h').value}:${document.getElementById('sleep-tab-end-m').value}`,
+                dreams: parseInt(document.getElementById('sleep-tab-dreams').value) || 0,
+                wakes: parseInt(document.getElementById('sleep-tab-wakes').value) || 0,
+                tiredness: document.getElementById('sleep-tab-tiredness').value
+            };
+            if (log) {
+                log.sleep = sleepData;
+            } else {
+                appState.logs.push({
+                    id: Date.now().toString(),
+                    date: date,
+                    exercises: [],
+                    mood: '😊',
+                    weight: null,
+                    bodyFat: null,
+                    notes: '',
+                    sleep: sleepData
+                });
+            }
+            localStorage.setItem('fitlog_v2_data', JSON.stringify(appState.logs));
+            renderSleepTab();
+            alert('睡眠记录已保存 🌙');
+        };
 
         function init() {
             document.getElementById('header-banner').textContent = appState.banner;
@@ -282,7 +469,20 @@
             const name = document.getElementById('lib-new-name').value.trim();
             const group = document.getElementById('lib-new-group').value;
             if(!name) return;
-            appState.library.push({ id: Date.now().toString(), name, group });
+            
+            // Find the last index of the same group to insert after it
+            let lastIndex = -1;
+            for (let i = 0; i < appState.library.length; i++) {
+                if (appState.library[i].group === group) lastIndex = i;
+            }
+            
+            const newItem = { id: Date.now().toString(), name, group };
+            if (lastIndex === -1) {
+                appState.library.push(newItem);
+            } else {
+                appState.library.splice(lastIndex + 1, 0, newItem);
+            }
+            
             localStorage.setItem('fitlog_lib_v2', JSON.stringify(appState.library));
             renderLibrary();
             document.getElementById('lib-new-name').value = '';
@@ -290,16 +490,55 @@
 
         function renderLibrary() {
             const list = document.getElementById('lib-list');
-            list.innerHTML = appState.library.map(item => `
-                <div class="flex items-center justify-between p-4 bg-white hover:bg-slate-50 transition-colors">
-                    <div class="flex items-center gap-3">
-                        <div class="w-2.5 h-2.5 rounded-full" style="background:${COLORS[item.group] || '#ddd'}"></div>
-                        <div class="text-[14px] font-black text-slate-800">${item.name}</div>
-                    </div>
-                    <button onclick="deleteLibItem('${item.id}')" class="text-slate-200 text-xl font-bold px-2">×</button>
-                </div>
-            `).join('');
+            const grouped = {};
+            appState.library.forEach((item, index) => {
+                if (!grouped[item.group]) grouped[item.group] = [];
+                grouped[item.group].push({ ...item, originalIndex: index });
+            });
+
+            const groupsOrder = ['胸部', '背部', '腿部', '肩部', '手臂', '核心', '有氧'];
+            
+            list.innerHTML = groupsOrder.map(group => {
+                const items = grouped[group] || [];
+                if (items.length === 0) return '';
+                return `
+                    <div class="bg-slate-50/50 px-4 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">${group}</div>
+                    ${items.map((item, idx) => `
+                        <div class="flex items-center justify-between p-4 bg-white hover:bg-slate-50 transition-colors group">
+                            <div class="flex items-center gap-3">
+                                <div class="w-2.5 h-2.5 rounded-full" style="background:${COLORS[item.group] || '#ddd'}"></div>
+                                <div class="text-[14px] font-black text-slate-800">${item.name}</div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button onclick="moveLibItem(${item.originalIndex}, -1)" class="w-6 h-6 flex items-center justify-center bg-slate-50 rounded text-slate-400 hover:text-blue-600">↑</button>
+                                    <button onclick="moveLibItem(${item.originalIndex}, 1)" class="w-6 h-6 flex items-center justify-center bg-slate-50 rounded text-slate-400 hover:text-blue-600">↓</button>
+                                </div>
+                                <button onclick="deleteLibItem('${item.id}')" class="text-slate-200 hover:text-red-400 text-xl font-bold px-2">×</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                `;
+            }).join('');
         }
+
+        window.moveLibItem = (index, direction) => {
+            const newIndex = index + direction;
+            if (newIndex < 0 || newIndex >= appState.library.length) return;
+            
+            // Only allow moving within the same group for better UX as requested
+            if (appState.library[index].group !== appState.library[newIndex].group) {
+                // If moving across groups, we still allow it but it might be confusing
+                // The user said "加到对应部位的动作最后", implying group-based order
+            }
+            
+            const temp = appState.library[index];
+            appState.library[index] = appState.library[newIndex];
+            appState.library[newIndex] = temp;
+            
+            localStorage.setItem('fitlog_lib_v2', JSON.stringify(appState.library));
+            renderLibrary();
+        };
 
         window.deleteLibItem = (id) => {
             if(!confirm('确定移除此动作？')) return;
@@ -315,6 +554,14 @@
             currentEditLog.weight = parseFloat(document.getElementById('edit-weight').value) || null;
             currentEditLog.bodyFat = parseFloat(document.getElementById('edit-fat').value) || null;
             currentEditLog.notes = document.getElementById('edit-notes').value;
+            
+            currentEditLog.sleep = {
+                start: `${document.getElementById('sleep-start-h').value}:${document.getElementById('sleep-start-m').value}`,
+                end: `${document.getElementById('sleep-end-h').value}:${document.getElementById('sleep-end-m').value}`,
+                dreams: parseInt(document.getElementById('sleep-dreams').value) || 0,
+                wakes: parseInt(document.getElementById('sleep-wakes').value) || 0,
+                tiredness: document.getElementById('sleep-tiredness').value
+            };
         }
 
         window.openEditor = (id = null) => {
@@ -327,14 +574,37 @@
                 deleteBtn.classList.remove('hidden');
             } else {
                 const draft = localStorage.getItem('fitlog_editor_draft');
-                currentEditLog = draft ? JSON.parse(draft) : { id: Date.now().toString(), date: getLocalToday(), exercises: [], mood: '😊', weight: null, bodyFat: null, notes: '' };
+                currentEditLog = draft ? JSON.parse(draft) : { 
+                    id: Date.now().toString(), 
+                    date: getLocalToday(), 
+                    exercises: [], 
+                    mood: '😊', 
+                    weight: null, 
+                    bodyFat: null, 
+                    notes: '',
+                    sleep: { start: '01:00', end: '09:05', dreams: 0, wakes: 0, tiredness: 'normal' }
+                };
                 deleteBtn.classList.add('hidden');
+            }
+            if (!currentEditLog.sleep) {
+                currentEditLog.sleep = { start: '01:00', end: '09:05', dreams: 0, wakes: 0, tiredness: 'normal' };
             }
             document.getElementById('edit-date').value = currentEditLog.date;
             document.getElementById('edit-mood').value = currentEditLog.mood;
             document.getElementById('edit-weight').value = currentEditLog.weight || '';
             document.getElementById('edit-fat').value = currentEditLog.bodyFat || '';
             document.getElementById('edit-notes').value = currentEditLog.notes;
+            
+            const [sh, sm] = currentEditLog.sleep.start.split(':');
+            const [eh, em] = currentEditLog.sleep.end.split(':');
+            document.getElementById('sleep-start-h').value = sh;
+            document.getElementById('sleep-start-m').value = sm;
+            document.getElementById('sleep-end-h').value = eh;
+            document.getElementById('sleep-end-m').value = em;
+            document.getElementById('sleep-dreams').value = currentEditLog.sleep.dreams;
+            document.getElementById('sleep-wakes').value = currentEditLog.sleep.wakes;
+            document.getElementById('sleep-tiredness').value = currentEditLog.sleep.tiredness;
+            
             syncEditorUI();
         };
 
@@ -406,7 +676,7 @@
             list.innerHTML = sorted.map(log => `
                 <div class="bg-white rounded-[1.5rem] p-6 card-shadow border border-slate-50 space-y-4">
                     <div class="flex justify-between items-start">
-                        <div class="flex items-center gap-4"><span class="text-4xl leading-none">${log.mood || '😊'}</span><div><h3 class="font-black text-[14px] text-slate-800">${log.date}</h3><p class="text-[10px] font-black text-slate-300 tracking-widest mt-0.5 uppercase">容量: ${calculateLogVolume(log)}kg | ${log.weight || '--'}kg</p></div></div>
+                        <div class="flex items-center gap-4"><span class="text-4xl leading-none">${log.mood || '😊'}</span><div><h3 class="font-black text-[14px] text-slate-800">${log.date}</h3><p class="text-[10px] font-black text-slate-300 tracking-widest mt-0.5 uppercase">容量: ${calculateLogVolume(log)}kg | ${log.weight || '--'}kg ${log.sleep ? `| 💤 ${calculateSleepDuration(log.sleep)}h` : ''}</p></div></div>
                         <button onclick="openEditor('${log.id}')" class="px-4 py-1.5 text-blue-600 font-black text-[11px] bg-blue-50 rounded-full">编辑</button>
                     </div>
                     ${log.notes ? `<div class="bg-slate-50/50 p-3 rounded-xl border-l-4 border-slate-200"><p class="text-[11px] text-slate-500 font-medium leading-relaxed italic">"${log.notes}"</p></div>` : ''}
@@ -430,7 +700,72 @@
             if(id === 'calendar') renderCalendar();
             if(id === 'stats') renderStats();
             if(id === 'library') renderLibrary();
+            if(id === 'sleep') renderSleepTab();
         };
+
+        function renderSleepTab() {
+            const dateInput = document.getElementById('sleep-tab-date');
+            if (!dateInput.value) {
+                dateInput.value = getLocalToday();
+                loadSleepDataForDate(dateInput.value);
+            }
+            renderSleepStats();
+            renderSleepCalendar();
+        }
+
+        function renderSleepStats() {
+            const logs = [...appState.logs].sort((a,b) => new Date(a.date) - new Date(b.date));
+            const labels = logs.map(l => l.date.slice(5));
+            const zoomOptions = {
+                pan: { enabled: true, mode: 'x' },
+                zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' }
+            };
+
+            if(charts.sleep) charts.sleep.destroy();
+            charts.sleep = new Chart(document.getElementById('sleep-chart'), { 
+                type: 'line', 
+                data: { 
+                    labels, 
+                    datasets: [{ 
+                        data: logs.map(l => calculateSleepDuration(l.sleep)), 
+                        borderColor: '#8b5cf6', 
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)', 
+                        fill: true, 
+                        tension: 0.4 
+                    }] 
+                }, 
+                options: { plugins: { legend: { display: false }, zoom: zoomOptions }, scales: { y: { beginAtZero: true } } } 
+            });
+        }
+
+        function renderSleepCalendar() {
+            const grid = document.getElementById('sleep-calendar-days'); grid.innerHTML = '';
+            const y = currentSleepMonth.getFullYear(), m = currentSleepMonth.getMonth();
+            const names = ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"];
+            document.getElementById('sleep-calendar-title').innerHTML = `${y}年 ${names[m]}`;
+            const first = new Date(y, m, 1).getDay();
+            const daysCount = new Date(y, m+1, 0).getDate();
+            for(let i=0; i<first; i++) grid.appendChild(document.createElement('div'));
+            
+            const tirednessColors = { refreshed: 'bg-emerald-400', normal: 'bg-blue-400', tired: 'bg-amber-400' };
+
+            for(let d=1; d<=daysCount; d++) {
+                const iso = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const log = appState.logs.find(l => l.date === iso);
+                const hasSleep = log && log.sleep;
+                
+                const dayDiv = document.createElement('div');
+                dayDiv.className = `flex flex-col items-center justify-center min-h-[40px] rounded-lg cursor-pointer transition-all ${hasSleep ? 'bg-slate-50 border border-slate-100' : 'hover:bg-slate-50'}`;
+                dayDiv.innerHTML = `<span class="text-[10px] font-black ${hasSleep ? 'text-slate-800' : 'text-slate-300'}">${d}</span>${hasSleep ? `<div class="w-1.5 h-1.5 rounded-full mt-1 ${tirednessColors[log.sleep.tiredness] || 'bg-slate-300'}"></div>` : ''}`;
+                dayDiv.onclick = () => {
+                    document.getElementById('sleep-tab-date').value = iso;
+                    loadSleepDataForDate(iso);
+                };
+                grid.appendChild(dayDiv);
+            }
+        }
+
+        window.changeSleepMonth = (dir) => { currentSleepMonth.setMonth(currentSleepMonth.getMonth()+dir); renderSleepCalendar(); };
 
         function renderStats() {
             const logs = [...appState.logs].sort((a,b) => new Date(a.date) - new Date(b.date));
@@ -444,16 +779,40 @@
             document.getElementById('pr-squat').textContent = prs.s || '--';
             document.getElementById('pr-bench').textContent = prs.b || '--';
             document.getElementById('pr-deadlift').textContent = prs.d || '--';
-            const recent = logs.slice(-12);
-            const labels = recent.map(l => l.date.slice(5));
+            
+            const labels = logs.map(l => l.date.slice(5));
+            const zoomOptions = {
+                pan: { enabled: true, mode: 'x' },
+                zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' }
+            };
+
             if(charts.volume) charts.volume.destroy();
-            charts.volume = new Chart(document.getElementById('volume-chart'), { type: 'bar', data: { labels, datasets: [{ label: '容量', data: recent.map(l => calculateLogVolume(l)), backgroundColor: 'rgba(59, 130, 246, 0.4)', borderRadius: 8 }] }, options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
+            charts.volume = new Chart(document.getElementById('volume-chart'), { 
+                type: 'bar', 
+                data: { labels, datasets: [{ label: '容量', data: logs.map(l => calculateLogVolume(l)), backgroundColor: 'rgba(59, 130, 246, 0.4)', borderRadius: 8 }] }, 
+                options: { plugins: { legend: { display: false }, zoom: zoomOptions }, scales: { y: { beginAtZero: true } } } 
+            });
+            
             if(charts.sbd) charts.sbd.destroy();
-            charts.sbd = new Chart(document.getElementById('sbd-chart'), { type: 'line', data: { labels, datasets: [{ label: '蹲', data: recent.map(l => { const e = l.exercises.find(e => e.name.includes('深蹲')); return e ? Math.max(...e.sets.map(s => s.weight)) : null; }), borderColor: '#ef4444', tension: 0.4, spanGaps: true }, { label: '推', data: recent.map(l => { const e = l.exercises.find(e => e.name.includes('卧推')); return e ? Math.max(...e.sets.map(s => s.weight)) : null; }), borderColor: '#3b82f6', tension: 0.4, spanGaps: true }, { label: '拉', data: recent.map(l => { const e = l.exercises.find(e => e.name.includes('硬拉')); return e ? Math.max(...e.sets.map(s => s.weight)) : null; }), borderColor: '#1e293b', tension: 0.4, spanGaps: true }] } });
+            charts.sbd = new Chart(document.getElementById('sbd-chart'), { 
+                type: 'line', 
+                data: { labels, datasets: [{ label: '蹲', data: logs.map(l => { const e = l.exercises.find(e => e.name.includes('深蹲')); return e ? Math.max(...e.sets.map(s => s.weight)) : null; }), borderColor: '#ef4444', tension: 0.4, spanGaps: true }, { label: '推', data: logs.map(l => { const e = l.exercises.find(e => e.name.includes('卧推')); return e ? Math.max(...e.sets.map(s => s.weight)) : null; }), borderColor: '#3b82f6', tension: 0.4, spanGaps: true }, { label: '拉', data: logs.map(l => { const e = l.exercises.find(e => e.name.includes('硬拉')); return e ? Math.max(...e.sets.map(s => s.weight)) : null; }), borderColor: '#1e293b', tension: 0.4, spanGaps: true }] },
+                options: { plugins: { zoom: zoomOptions } }
+            });
+            
             if(charts.weight) charts.weight.destroy();
-            charts.weight = new Chart(document.getElementById('weight-chart'), { type: 'line', data: { labels, datasets: [{ data: recent.map(l => l.weight), borderColor: '#f97316', backgroundColor: 'rgba(249, 115, 22, 0.1)', fill: true, tension: 0.4 }] }, options: { plugins: { legend: { display: false } } } });
+            charts.weight = new Chart(document.getElementById('weight-chart'), { 
+                type: 'line', 
+                data: { labels, datasets: [{ data: logs.map(l => l.weight), borderColor: '#f97316', backgroundColor: 'rgba(249, 115, 22, 0.1)', fill: true, tension: 0.4 }] }, 
+                options: { plugins: { legend: { display: false }, zoom: zoomOptions } } 
+            });
+            
             if(charts.fat) charts.fat.destroy();
-            charts.fat = new Chart(document.getElementById('fat-chart'), { type: 'line', data: { labels, datasets: [{ data: recent.map(l => l.bodyFat), borderColor: '#ec4899', backgroundColor: 'rgba(236, 72, 153, 0.1)', fill: true, tension: 0.4 }] }, options: { plugins: { legend: { display: false } } } });
+            charts.fat = new Chart(document.getElementById('fat-chart'), { 
+                type: 'line', 
+                data: { labels, datasets: [{ data: logs.map(l => l.bodyFat), borderColor: '#ec4899', backgroundColor: 'rgba(236, 72, 153, 0.1)', fill: true, tension: 0.4 }] }, 
+                options: { plugins: { legend: { display: false }, zoom: zoomOptions } } 
+            });
         }
 
         function renderCalendar() {
@@ -472,7 +831,8 @@
                 if (hasLog) {
                     const groupCounts = {};
                     dayLogs.forEach(log => log.exercises.forEach(ex => groupCounts[ex.group] = (groupCounts[ex.group] || 0) + 1));
-                    mainGroup = Object.entries(groupCounts).sort((a,b) => b[1] - a[1])[0][0];
+                    const entries = Object.entries(groupCounts).sort((a,b) => b[1] - a[1]);
+                    mainGroup = entries.length > 0 ? entries[0][0] : "睡眠";
                 }
                 const dayDiv = document.createElement('div');
                 dayDiv.className = `flex flex-col items-center justify-start min-h-[50px] py-1 rounded-xl cursor-pointer transition-all ${hasLog ? 'bg-slate-50 border border-slate-100 shadow-sm' : 'hover:bg-slate-50'}`;
@@ -501,5 +861,6 @@
         window.clearData = () => { if(confirm('⚠️ 确定要清空所有数据吗？此操作无法撤销。')) { localStorage.clear(); location.reload(); } };
         init();
     </script>
+<script type="module" src="/index.tsx"></script>
 </body>
 </html>
