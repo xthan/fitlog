@@ -115,19 +115,19 @@
                     
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-2">
-                            <label class="text-[10px] text-slate-400 font-black block uppercase tracking-wider">入睡时间</label>
+                            <label class="text-[10px] text-slate-400 font-black block uppercase tracking-wider">入睡时间 (滚轮/点击)</label>
                             <div class="flex items-center gap-1 bg-slate-50 rounded-xl p-2 justify-center">
-                                <input type="text" id="sleep-tab-start-h" class="w-10 bg-transparent text-center font-black mono outline-none cursor-ns-resize" readonly onwheel="handleWheel(event, 'sleep-tab-start-h', 23)">
+                                <input type="text" id="sleep-tab-start-h" class="w-10 bg-transparent text-center font-black mono outline-none cursor-pointer" onwheel="handleWheel(event, 'sleep-tab-start-h', 23)" onclick="window.adjustValue('sleep-tab-start-h', 1, 23)" oncontextmenu="window.adjustValue('sleep-tab-start-h', -1, 23); return false;">
                                 <span class="font-black">:</span>
-                                <input type="text" id="sleep-tab-start-m" class="w-10 bg-transparent text-center font-black mono outline-none cursor-ns-resize" readonly onwheel="handleWheel(event, 'sleep-tab-start-m', 59)">
+                                <input type="text" id="sleep-tab-start-m" class="w-10 bg-transparent text-center font-black mono outline-none cursor-pointer" onwheel="handleWheel(event, 'sleep-tab-start-m', 59)" onclick="window.adjustValue('sleep-tab-start-m', 5, 59)" oncontextmenu="window.adjustValue('sleep-tab-start-m', -5, 59); return false;">
                             </div>
                         </div>
                         <div class="space-y-2">
-                            <label class="text-[10px] text-slate-400 font-black block uppercase tracking-wider">醒来时间</label>
+                            <label class="text-[10px] text-slate-400 font-black block uppercase tracking-wider">醒来时间 (滚轮/点击)</label>
                             <div class="flex items-center gap-1 bg-slate-50 rounded-xl p-2 justify-center">
-                                <input type="text" id="sleep-tab-end-h" class="w-10 bg-transparent text-center font-black mono outline-none cursor-ns-resize" readonly onwheel="handleWheel(event, 'sleep-tab-end-h', 23)">
+                                <input type="text" id="sleep-tab-end-h" class="w-10 bg-transparent text-center font-black mono outline-none cursor-pointer" onwheel="handleWheel(event, 'sleep-tab-end-h', 23)" onclick="window.adjustValue('sleep-tab-end-h', 1, 23)" oncontextmenu="window.adjustValue('sleep-tab-end-h', -1, 23); return false;">
                                 <span class="font-black">:</span>
-                                <input type="text" id="sleep-tab-end-m" class="w-10 bg-transparent text-center font-black mono outline-none cursor-ns-resize" readonly onwheel="handleWheel(event, 'sleep-tab-end-m', 59)">
+                                <input type="text" id="sleep-tab-end-m" class="w-10 bg-transparent text-center font-black mono outline-none cursor-pointer" onwheel="handleWheel(event, 'sleep-tab-end-m', 59)" onclick="window.adjustValue('sleep-tab-end-m', 5, 59)" oncontextmenu="window.adjustValue('sleep-tab-end-m', -5, 59); return false;">
                             </div>
                         </div>
                     </div>
@@ -252,19 +252,19 @@
                     <h3 class="font-black text-slate-800 text-base">睡眠记录</h3>
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-2">
-                            <label class="text-[10px] text-slate-400 font-black block uppercase tracking-wider">入睡时间 (滚轮调整)</label>
+                            <label class="text-[10px] text-slate-400 font-black block uppercase tracking-wider">入睡时间 (滚轮/点击)</label>
                             <div class="flex items-center gap-1 bg-slate-50 rounded-xl p-2 justify-center">
-                                <input type="text" id="sleep-start-h" class="w-10 bg-transparent text-center font-black mono outline-none cursor-ns-resize" readonly onwheel="handleWheel(event, 'sleep-start-h', 23)" onclick="this.focus()">
+                                <input type="text" id="sleep-start-h" class="w-10 bg-transparent text-center font-black mono outline-none cursor-pointer" onwheel="handleWheel(event, 'sleep-start-h', 23)" onclick="window.adjustValue('sleep-start-h', 1, 23)" oncontextmenu="window.adjustValue('sleep-start-h', -1, 23); return false;">
                                 <span class="font-black">:</span>
-                                <input type="text" id="sleep-start-m" class="w-10 bg-transparent text-center font-black mono outline-none cursor-ns-resize" readonly onwheel="handleWheel(event, 'sleep-start-m', 59)" onclick="this.focus()">
+                                <input type="text" id="sleep-start-m" class="w-10 bg-transparent text-center font-black mono outline-none cursor-pointer" onwheel="handleWheel(event, 'sleep-start-m', 59)" onclick="window.adjustValue('sleep-start-m', 5, 59)" oncontextmenu="window.adjustValue('sleep-start-m', -5, 59); return false;">
                             </div>
                         </div>
                         <div class="space-y-2">
-                            <label class="text-[10px] text-slate-400 font-black block uppercase tracking-wider">醒来时间 (滚轮调整)</label>
+                            <label class="text-[10px] text-slate-400 font-black block uppercase tracking-wider">醒来时间 (滚轮/点击)</label>
                             <div class="flex items-center gap-1 bg-slate-50 rounded-xl p-2 justify-center">
-                                <input type="text" id="sleep-end-h" class="w-10 bg-transparent text-center font-black mono outline-none cursor-ns-resize" readonly onwheel="handleWheel(event, 'sleep-end-h', 23)" onclick="this.focus()">
+                                <input type="text" id="sleep-end-h" class="w-10 bg-transparent text-center font-black mono outline-none cursor-pointer" onwheel="handleWheel(event, 'sleep-end-h', 23)" onclick="window.adjustValue('sleep-end-h', 1, 23)" oncontextmenu="window.adjustValue('sleep-end-h', -1, 23); return false;">
                                 <span class="font-black">:</span>
-                                <input type="text" id="sleep-end-m" class="w-10 bg-transparent text-center font-black mono outline-none cursor-ns-resize" readonly onwheel="handleWheel(event, 'sleep-end-m', 59)" onclick="this.focus()">
+                                <input type="text" id="sleep-end-m" class="w-10 bg-transparent text-center font-black mono outline-none cursor-pointer" onwheel="handleWheel(event, 'sleep-end-m', 59)" onclick="window.adjustValue('sleep-end-m', 5, 59)" oncontextmenu="window.adjustValue('sleep-end-m', -5, 59); return false;">
                             </div>
                         </div>
                     </div>
@@ -345,15 +345,18 @@
 
         window.handleWheel = (e, id, max) => {
             e.preventDefault();
+            const delta = e.deltaY < 0 ? 1 : -1;
+            window.adjustValue(id, delta, max);
+        };
+
+        window.adjustValue = (id, delta, max) => {
             const input = document.getElementById(id);
             let val = parseInt(input.value) || 0;
-            if (e.deltaY < 0) val++; else val--;
+            val += delta;
             if (val > max) val = 0;
             if (val < 0) val = max;
             input.value = String(val).padStart(2, '0');
-            if (id.includes('tab')) {
-                // No auto-save for tab inputs to avoid partial data
-            } else {
+            if (!id.includes('tab')) {
                 handleEditorInput();
             }
         };
