@@ -158,6 +158,11 @@
                     <canvas id="sleep-chart" height="150"></canvas>
                 </div>
 
+                <div class="bg-white rounded-[1.5rem] p-5 card-shadow border border-slate-100">
+                    <h3 class="text-[13px] font-black text-slate-800 mb-3 text-emerald-500">睡眠质量趋势 (体感)</h3>
+                    <canvas id="sleep-quality-chart" height="150"></canvas>
+                </div>
+
                 <div class="bg-white rounded-[2rem] p-6 border border-slate-100 card-shadow">
                     <div class="flex justify-between items-center mb-6">
                         <h2 id="sleep-calendar-title" class="text-xl font-black text-slate-800">睡眠质量日历</h2>
@@ -221,10 +226,21 @@
                     </div>
                     <div class="pt-6 border-t border-slate-50 space-y-3">
                         <button onclick="exportMarkdown()" class="w-full p-4 bg-blue-50 text-blue-600 rounded-xl text-[12px] font-black flex justify-between items-center">
-                            <span>导出预览级 Markdown</span><span>📄</span>
+                            <span>导出 Markdown 预览 (用于分享)</span><span>📄</span>
                         </button>
                         <button onclick="clearData()" class="w-full p-4 bg-red-50 text-red-500 rounded-xl text-[12px] font-black">清空所有数据</button>
                     </div>
+                </div>
+
+                <!-- Copyright Footer -->
+                <div class="mt-10 pt-6 border-t border-slate-100 text-center space-y-2 pb-10">
+                    <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest">FitLog v2.2</p>
+                    <p class="text-[11px] text-slate-400 font-bold">© 2024-2026 Xintong Han</p>
+                    <div class="flex justify-center gap-4 text-[11px] font-bold text-blue-500">
+                        <a href="https://xthan.github.io/fitlog/" target="_blank" class="hover:underline">Website</a>
+                        <a href="https://github.com/xthan/fitlog" target="_blank" class="hover:underline">GitHub</a>
+                    </div>
+                    <p class="text-[9px] text-slate-300 font-medium italic">Last Updated: 2026-02-24</p>
                 </div>
             </div>
         </main>
@@ -245,47 +261,6 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div class="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm"><label class="text-[10px] text-slate-400 font-black block mb-1">体重 (KG)</label><input type="number" step="0.1" id="edit-weight" class="w-full text-[13px] font-black outline-none bg-transparent mono" placeholder="0.0" oninput="handleEditorInput()"></div>
                     <div class="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm"><label class="text-[10px] text-slate-400 font-black block mb-1">体脂 (%)</label><input type="number" step="0.1" id="edit-fat" class="w-full text-[13px] font-black outline-none bg-transparent mono" placeholder="0.0" oninput="handleEditorInput()"></div>
-                </div>
-
-                <!-- Sleep Section -->
-                <div class="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm space-y-4">
-                    <h3 class="font-black text-slate-800 text-base">睡眠记录</h3>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-2">
-                            <label class="text-[10px] text-slate-400 font-black block uppercase tracking-wider">入睡时间 (滚轮/点击)</label>
-                            <div class="flex items-center gap-1 bg-slate-50 rounded-xl p-2 justify-center">
-                                <input type="text" id="sleep-start-h" class="w-10 bg-transparent text-center font-black mono outline-none cursor-pointer" onwheel="handleWheel(event, 'sleep-start-h', 23)" onclick="window.adjustValue('sleep-start-h', 1, 23)" oncontextmenu="window.adjustValue('sleep-start-h', -1, 23); return false;">
-                                <span class="font-black">:</span>
-                                <input type="text" id="sleep-start-m" class="w-10 bg-transparent text-center font-black mono outline-none cursor-pointer" onwheel="handleWheel(event, 'sleep-start-m', 59)" onclick="window.adjustValue('sleep-start-m', 5, 59)" oncontextmenu="window.adjustValue('sleep-start-m', -5, 59); return false;">
-                            </div>
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-[10px] text-slate-400 font-black block uppercase tracking-wider">醒来时间 (滚轮/点击)</label>
-                            <div class="flex items-center gap-1 bg-slate-50 rounded-xl p-2 justify-center">
-                                <input type="text" id="sleep-end-h" class="w-10 bg-transparent text-center font-black mono outline-none cursor-pointer" onwheel="handleWheel(event, 'sleep-end-h', 23)" onclick="window.adjustValue('sleep-end-h', 1, 23)" oncontextmenu="window.adjustValue('sleep-end-h', -1, 23); return false;">
-                                <span class="font-black">:</span>
-                                <input type="text" id="sleep-end-m" class="w-10 bg-transparent text-center font-black mono outline-none cursor-pointer" onwheel="handleWheel(event, 'sleep-end-m', 59)" onclick="window.adjustValue('sleep-end-m', 5, 59)" oncontextmenu="window.adjustValue('sleep-end-m', -5, 59); return false;">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-3 gap-2">
-                        <div class="bg-slate-50 p-2 rounded-xl text-center">
-                            <label class="text-[9px] text-slate-400 font-black block mb-1">梦境</label>
-                            <input type="number" id="sleep-dreams" class="w-full bg-transparent text-center font-black mono outline-none" value="0" oninput="handleEditorInput()">
-                        </div>
-                        <div class="bg-slate-50 p-2 rounded-xl text-center">
-                            <label class="text-[9px] text-slate-400 font-black block mb-1">中途醒来</label>
-                            <input type="number" id="sleep-wakes" class="w-full bg-transparent text-center font-black mono outline-none" value="0" oninput="handleEditorInput()">
-                        </div>
-                        <div class="bg-slate-50 p-2 rounded-xl text-center">
-                            <label class="text-[9px] text-slate-400 font-black block mb-1">体感</label>
-                            <select id="sleep-tiredness" class="w-full bg-transparent text-center font-black outline-none text-[12px]" oninput="handleEditorInput()">
-                                <option value="refreshed">精神</option>
-                                <option value="normal" selected>正常</option>
-                                <option value="tired">疲惫</option>
-                            </select>
-                        </div>
-                    </div>
                 </div>
                 <div id="edit-exercises" class="space-y-4"></div>
                 <div class="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm">
@@ -341,7 +316,7 @@
         let currentMonth = new Date();
         let currentSleepMonth = new Date();
         let currentEditLog = null;
-        let charts = { sbd: null, weight: null, fat: null, volume: null, sleep: null };
+        let charts = { sbd: null, weight: null, fat: null, volume: null, sleep: null, sleepQuality: null };
 
         window.handleWheel = (e, id, max) => {
             e.preventDefault();
@@ -557,14 +532,6 @@
             currentEditLog.weight = parseFloat(document.getElementById('edit-weight').value) || null;
             currentEditLog.bodyFat = parseFloat(document.getElementById('edit-fat').value) || null;
             currentEditLog.notes = document.getElementById('edit-notes').value;
-            
-            currentEditLog.sleep = {
-                start: `${document.getElementById('sleep-start-h').value}:${document.getElementById('sleep-start-m').value}`,
-                end: `${document.getElementById('sleep-end-h').value}:${document.getElementById('sleep-end-m').value}`,
-                dreams: parseInt(document.getElementById('sleep-dreams').value) || 0,
-                wakes: parseInt(document.getElementById('sleep-wakes').value) || 0,
-                tiredness: document.getElementById('sleep-tiredness').value
-            };
         }
 
         window.openEditor = (id = null) => {
@@ -597,16 +564,6 @@
             document.getElementById('edit-weight').value = currentEditLog.weight || '';
             document.getElementById('edit-fat').value = currentEditLog.bodyFat || '';
             document.getElementById('edit-notes').value = currentEditLog.notes;
-            
-            const [sh, sm] = currentEditLog.sleep.start.split(':');
-            const [eh, em] = currentEditLog.sleep.end.split(':');
-            document.getElementById('sleep-start-h').value = sh;
-            document.getElementById('sleep-start-m').value = sm;
-            document.getElementById('sleep-end-h').value = eh;
-            document.getElementById('sleep-end-m').value = em;
-            document.getElementById('sleep-dreams').value = currentEditLog.sleep.dreams;
-            document.getElementById('sleep-wakes').value = currentEditLog.sleep.wakes;
-            document.getElementById('sleep-tiredness').value = currentEditLog.sleep.tiredness;
             
             syncEditorUI();
         };
@@ -669,14 +626,17 @@
         function renderHome() {
             const list = document.getElementById('log-list');
             const sorted = [...appState.logs].sort((a,b) => new Date(b.date) - new Date(a.date));
-            document.getElementById('stat-total').textContent = sorted.length;
+            const workoutLogs = sorted.filter(l => l.exercises && l.exercises.length > 0);
+            
+            document.getElementById('stat-total').textContent = workoutLogs.length;
             const now = new Date();
-            document.getElementById('stat-month').textContent = sorted.filter(l => {
+            document.getElementById('stat-month').textContent = workoutLogs.filter(l => {
                 const d = new Date(l.date.replace(/-/g, '/'));
                 return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
             }).length;
-            if(!sorted.length) { list.innerHTML = '<div class="py-20 text-center text-slate-300 font-bold italic">没有记录</div>'; return; }
-            list.innerHTML = sorted.map(log => `
+            
+            if(!workoutLogs.length) { list.innerHTML = '<div class="py-20 text-center text-slate-300 font-bold italic">没有训练记录</div>'; return; }
+            list.innerHTML = workoutLogs.map(log => `
                 <div class="bg-white rounded-[1.5rem] p-6 card-shadow border border-slate-50 space-y-4">
                     <div class="flex justify-between items-start">
                         <div class="flex items-center gap-4"><span class="text-4xl leading-none">${log.mood || '😊'}</span><div><h3 class="font-black text-[14px] text-slate-800">${log.date}</h3><p class="text-[10px] font-black text-slate-300 tracking-widest mt-0.5 uppercase">容量: ${calculateLogVolume(log)}kg | ${log.weight || '--'}kg ${log.sleep ? `| 💤 ${calculateSleepDuration(log.sleep)}h` : ''}</p></div></div>
@@ -717,7 +677,7 @@
         }
 
         function renderSleepStats() {
-            const logs = [...appState.logs].sort((a,b) => new Date(a.date) - new Date(b.date));
+            const logs = [...appState.logs].filter(l => l.sleep).sort((a,b) => new Date(a.date) - new Date(b.date));
             const labels = logs.map(l => l.date.slice(5));
             const zoomOptions = {
                 pan: { enabled: true, mode: 'x' },
@@ -738,6 +698,41 @@
                     }] 
                 }, 
                 options: { plugins: { legend: { display: false }, zoom: zoomOptions }, scales: { y: { beginAtZero: true } } } 
+            });
+
+            const tirednessMap = { refreshed: 3, normal: 2, tired: 1 };
+            if(charts.sleepQuality) charts.sleepQuality.destroy();
+            charts.sleepQuality = new Chart(document.getElementById('sleep-quality-chart'), {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: '体感质量',
+                        data: logs.map(l => tirednessMap[l.sleep.tiredness] || 2),
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        stepped: false
+                    }]
+                },
+                options: { 
+                    plugins: { legend: { display: false }, zoom: zoomOptions }, 
+                    scales: { 
+                        y: { 
+                            min: 0.5, 
+                            max: 3.5, 
+                            ticks: { 
+                                callback: function(value) {
+                                    if (value === 3) return '精神';
+                                    if (value === 2) return '正常';
+                                    if (value === 1) return '疲惫';
+                                    return '';
+                                }
+                            } 
+                        } 
+                    } 
+                }
             });
         }
 
