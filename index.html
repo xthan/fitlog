@@ -1,864 +1,1650 @@
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#fafafa">
     <title>FitLog | 悦动记录</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
-    <style>
-        :root { 
-            --safe-top: env(safe-area-inset-top); 
-            --safe-bottom: env(safe-area-inset-bottom); 
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Noto+Sans+SC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script>
+    tailwind.config = {
+        darkMode: 'class',
+        theme: {
+            extend: {
+                fontFamily: {
+                    display: ['Outfit', 'Noto Sans SC', 'sans-serif'],
+                    body: ['Noto Sans SC', 'sans-serif'],
+                    mono: ['JetBrains Mono', 'monospace'],
+                }
+            }
         }
-        body { font-family: 'Noto Sans SC', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #f1f5f9; }
+    }
+    </script>
+    <style>
+        :root {
+            --safe-top: env(safe-area-inset-top);
+            --safe-bottom: env(safe-area-inset-bottom);
+            --accent: #ea580c;
+            --accent-rgb: 234, 88, 12;
+        }
+        html.dark {
+            --accent: #fb923c;
+            --accent-rgb: 251, 146, 60;
+            color-scheme: dark;
+        }
+        * { -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Noto Sans SC', sans-serif; }
+        .font-display { font-family: 'Outfit', 'Noto Sans SC', sans-serif; }
         .mono { font-family: 'JetBrains Mono', monospace; }
-        .custom-scrollbar::-webkit-scrollbar { width: 0px; }
-        .tab-content { display: none; animation: fadeIn 0.3s ease-out; }
-        .tab-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        .active-nav { color: #2563eb; }
-        .active-nav .nav-dot { opacity: 1; transform: scale(1); }
-        .card-shadow { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05); }
-        input:focus, select:focus, textarea:focus { border-color: #3b82f6 !important; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
-        nav { padding-bottom: calc(15px + var(--safe-bottom)); height: calc(85px + var(--safe-bottom)); }
-        main { padding-bottom: calc(100px + var(--safe-bottom)); }
-        .header-pt { padding-top: calc(1.2rem + var(--safe-top)); }
+
+        /* Glass morphism */
+        .glass {
+            background: rgba(255,255,255,0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(0,0,0,0.06);
+        }
+        html.dark .glass {
+            background: rgba(20,20,22,0.82);
+            border-color: rgba(255,255,255,0.06);
+        }
+        .glass-card {
+            background: rgba(255,255,255,0.9);
+            border: 1px solid rgba(0,0,0,0.04);
+            border-radius: 1.25rem;
+        }
+        html.dark .glass-card {
+            background: rgba(28,28,32,0.65);
+            border-color: rgba(255,255,255,0.05);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 0; }
+
+        /* Tabs */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeUp 0.35s cubic-bezier(0.16,1,0.3,1); }
+
+        /* Nav */
+        nav { padding-bottom: calc(6px + var(--safe-bottom)); height: calc(56px + var(--safe-bottom)); }
+        main { padding-bottom: calc(64px + var(--safe-bottom)); }
+        .header-pt { padding-top: max(2.75rem, calc(1rem + var(--safe-top))); }
+        .nav-item.active svg { stroke-width: 2; }
+        .nav-item.active .nav-label { color: var(--accent); }
+        .nav-item.active .nav-indicator { transform: scaleX(1) !important; }
+
+        /* Animations */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.96); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(-16px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes toastOut {
+            to { opacity: 0; transform: translateY(-8px) scale(0.97); }
+        }
+        @keyframes ringPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(var(--accent-rgb), 0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(var(--accent-rgb), 0); }
+        }
+        .toast-enter { animation: toastIn 0.3s cubic-bezier(0.16,1,0.3,1); }
+        .toast-exit { animation: toastOut 0.25s ease-out forwards; }
+        .card-press:active { transform: scale(0.98); transition: transform 0.1s; }
+
+        /* Editor overlay */
+        #editor-overlay {
+            transition: transform 0.45s cubic-bezier(0.32, 0.72, 0, 1);
+            transform: translateY(100%);
+        }
+        #editor-overlay.open { transform: translateY(0); }
+
+        /* Custom focus */
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--accent) !important;
+            box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.1);
+            outline: none;
+        }
+
+        /* Noise texture overlay for depth */
+        .noise::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            opacity: 0.015;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+            z-index: -1;
+        }
+        html.dark .noise::after { opacity: 0.03; }
     </style>
-<link rel="stylesheet" href="/index.css">
 </head>
-<body class="text-slate-900 overflow-hidden">
-    <div class="flex flex-col h-screen max-w-2xl mx-auto bg-white shadow-2xl relative overflow-hidden">
-        
-        <header class="z-30 bg-white/95 backdrop-blur-md sticky top-0 border-b border-slate-100 px-6 py-3 flex items-center header-pt">
-            <h1 class="text-3xl font-black bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent tracking-tighter shrink-0">FITLOG</h1>
-            <div class="h-4 w-[1px] bg-slate-200 mx-4 shrink-0"></div>
-            <p id="header-banner" class="text-[14px] text-slate-400 font-bold italic truncate flex-1 pl-1"></p>
-        </header>
+<body class="noise overflow-hidden" style="padding-top: env(safe-area-inset-top); background: #fafafa;">
 
-        <main id="main-scroll" class="flex-1 overflow-y-auto custom-scrollbar bg-slate-50/30">
-            <!-- 首页 -->
-            <div id="tab-home" class="tab-content active p-4 space-y-6 pt-6">
+<!-- ═══ Toast Container ═══ -->
+<div id="toasts" class="fixed top-4 left-1/2 -translate-x-1/2 z-[999] flex flex-col gap-2 items-center pointer-events-none" style="padding-top: env(safe-area-inset-top)"></div>
+
+<!-- ═══ App Shell ═══ -->
+<div class="flex flex-col max-w-lg mx-auto relative overflow-hidden bg-zinc-50 dark:bg-zinc-950 shadow-2xl" style="height: calc(100vh - env(safe-area-inset-top));">
+
+    <!-- Header -->
+    <header class="z-30 glass sticky top-0 px-5 py-3 flex items-center gap-3">
+        <div class="flex items-center gap-2.5 shrink-0">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500 via-red-500 to-rose-600 flex items-center justify-center shadow-lg shadow-orange-500/30 relative">
+                <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6.5 6.5a2 2 0 0 1 3 0L12 9l2.5-2.5a2 2 0 0 1 3 0 2 2 0 0 1 0 3L15 12l2.5 2.5a2 2 0 0 1-3 3L12 15l-2.5 2.5a2 2 0 0 1-3-3L9 12 6.5 9.5a2 2 0 0 1 0-3Z"/>
+                    <path d="M12 4v1M12 19v1M4 12h1M19 12h1" stroke-width="2" opacity="0.5"/>
+                </svg>
+                <div class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-amber-400 rounded-full border-2 border-white dark:border-zinc-950 animate-pulse"></div>
+            </div>
+            <h1 class="text-lg font-display font-black tracking-tight text-zinc-900 dark:text-zinc-50">FITLOG</h1>
+        </div>
+        <div class="h-5 w-px bg-zinc-200 dark:bg-zinc-800"></div>
+        <p id="header-banner" class="text-xs text-zinc-400 dark:text-zinc-500 font-bold italic truncate flex-1"></p>
+    </header>
+
+    <!-- Main -->
+    <main id="main-scroll" class="flex-1 overflow-y-auto bg-zinc-50 dark:bg-zinc-950">
+
+        <!-- ─── 首页 ─── -->
+        <div id="tab-home" class="tab-content active p-4 space-y-5 pt-4">
+            <div class="grid grid-cols-3 gap-2.5">
+                <div class="glass-card p-4 text-center relative overflow-hidden">
+                    <div id="stat-total" class="text-2xl font-display font-black mono text-zinc-900 dark:text-zinc-50">0</div>
+                    <div class="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 mt-1 tracking-wider">累计训练</div>
+                </div>
+                <div class="glass-card p-4 text-center relative overflow-hidden">
+                    <div id="stat-month" class="text-2xl font-display font-black mono text-zinc-900 dark:text-zinc-50">0</div>
+                    <div class="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 mt-1 tracking-wider">本月训练</div>
+                </div>
+                <div class="glass-card p-4 text-center relative overflow-hidden">
+                    <div class="flex items-center justify-center gap-0.5">
+                        <div id="stat-week" class="text-2xl font-display font-black mono">0</div>
+                    </div>
+                    <div class="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 mt-1 tracking-wider">本周打卡</div>
+                </div>
+            </div>
+            <div class="flex justify-between items-center px-1">
+                <div>
+                    <h2 class="text-lg font-display font-black text-zinc-800 dark:text-zinc-100">训练日志</h2>
+                </div>
+                <button id="btn-new-workout" class="bg-gradient-to-r from-orange-500 to-amber-500 text-white px-5 py-2.5 rounded-xl text-xs font-black shadow-lg shadow-orange-500/20 active:scale-95 transition-transform">
+                    + 记一笔
+                </button>
+            </div>
+            <div id="log-list" class="space-y-3"></div>
+        </div>
+
+        <!-- ─── 日历 ─── -->
+        <div id="tab-calendar" class="tab-content p-4 space-y-4">
+            <div class="glass-card p-5">
+                <div class="flex justify-between items-center mb-5">
+                    <h2 id="calendar-title" class="text-lg font-display font-black text-zinc-800 dark:text-zinc-100"></h2>
+                    <div class="flex gap-1.5">
+                        <button id="cal-prev" class="w-9 h-9 flex items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-500 active:scale-90 transition-transform text-sm font-bold">←</button>
+                        <button id="cal-next" class="w-9 h-9 flex items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-500 active:scale-90 transition-transform text-sm font-bold">→</button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-black text-zinc-300 dark:text-zinc-600 mb-2">
+                    <div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div>
+                </div>
+                <div id="calendar-days" class="grid grid-cols-7 gap-y-2 gap-x-1 text-center"></div>
+            </div>
+            <div id="calendar-detail"></div>
+        </div>
+
+        <!-- ─── 睡眠 ─── -->
+        <div id="tab-sleep" class="tab-content p-4 space-y-5">
+            <div class="glass-card p-5 space-y-4">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-lg font-display font-black text-zinc-800 dark:text-zinc-100">睡眠记录</h2>
+                    <input type="date" id="sleep-date" class="text-xs font-bold bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-xl border-0 text-zinc-700 dark:text-zinc-300">
+                </div>
                 <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-blue-600 rounded-[2rem] p-6 text-white card-shadow relative overflow-hidden group">
-                        <div id="stat-total" class="text-3xl font-black mono leading-none">0</div>
-                        <div class="text-[11px] opacity-80 font-black tracking-widest mt-2">累计训练</div>
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] text-zinc-400 font-bold block tracking-wider">入睡时间</label>
+                        <input type="time" id="sleep-start" class="w-full bg-zinc-100 dark:bg-zinc-800 rounded-xl px-3 py-2.5 font-bold mono text-sm border-0 text-zinc-800 dark:text-zinc-200">
                     </div>
-                    <div class="bg-slate-900 rounded-[2rem] p-6 text-white card-shadow relative overflow-hidden group">
-                        <div id="stat-month" class="text-3xl font-black mono leading-none">0</div>
-                        <div class="text-[11px] opacity-80 font-black tracking-widest mt-2">本月训练</div>
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] text-zinc-400 font-bold block tracking-wider">醒来时间</label>
+                        <input type="time" id="sleep-end" class="w-full bg-zinc-100 dark:bg-zinc-800 rounded-xl px-3 py-2.5 font-bold mono text-sm border-0 text-zinc-800 dark:text-zinc-200">
                     </div>
                 </div>
-                <div class="flex justify-between items-end px-1">
-                    <div>
-                        <h2 class="text-xl font-black text-slate-800">训练日志</h2>
-                        <p class="text-[11px] text-slate-400 font-bold">坚持就是胜利</p>
-                    </div>
-                    <button onclick="openEditor()" class="bg-blue-600 text-white px-5 py-2.5 rounded-xl text-[13px] font-black shadow-lg shadow-blue-100 active:scale-95 transition-all">记一笔</button>
-                </div>
-                <div id="log-list" class="space-y-4"></div>
-            </div>
-
-            <!-- 日历 -->
-            <div id="tab-calendar" class="tab-content p-4 space-y-4">
-                <div class="bg-white rounded-[2rem] p-6 border border-slate-100 card-shadow">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 id="calendar-title" class="text-xl font-black text-slate-800"></h2>
-                        <div class="flex gap-2">
-                            <button onclick="changeMonth(-1)" class="w-10 h-10 flex items-center justify-center bg-slate-50 rounded-xl text-slate-500">←</button>
-                            <button onclick="changeMonth(1)" class="w-10 h-10 flex items-center justify-center bg-slate-50 rounded-xl text-slate-500">→</button>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-7 gap-1 text-center text-[11px] font-black text-slate-300 mb-2">
-                        <div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div>
-                    </div>
-                    <div id="calendar-days" class="grid grid-cols-7 gap-y-4 gap-x-2 text-center"></div>
-                </div>
-                <div id="calendar-detail"></div>
-            </div>
-
-            <!-- 统计 -->
-            <div id="tab-stats" class="tab-content p-4 space-y-6">
                 <div class="grid grid-cols-3 gap-2">
-                    <div class="bg-white p-4 rounded-2xl border border-slate-100 text-center shadow-sm">
-                        <div class="text-[10px] font-black text-red-500 mb-1">深蹲 PR</div>
-                        <div id="pr-squat" class="text-lg font-black mono">--</div>
+                    <div class="bg-zinc-100 dark:bg-zinc-800 p-2.5 rounded-xl text-center">
+                        <label class="text-[9px] text-zinc-400 font-bold block mb-1">梦境</label>
+                        <input type="number" id="sleep-dreams" class="w-full bg-transparent text-center font-bold mono text-sm border-0 text-zinc-800 dark:text-zinc-200" value="0" min="0">
                     </div>
-                    <div class="bg-white p-4 rounded-2xl border border-slate-100 text-center shadow-sm">
-                        <div class="text-[10px] font-black text-blue-500 mb-1">卧推 PR</div>
-                        <div id="pr-bench" class="text-lg font-black mono">--</div>
+                    <div class="bg-zinc-100 dark:bg-zinc-800 p-2.5 rounded-xl text-center">
+                        <label class="text-[9px] text-zinc-400 font-bold block mb-1">中途醒来</label>
+                        <input type="number" id="sleep-wakes" class="w-full bg-transparent text-center font-bold mono text-sm border-0 text-zinc-800 dark:text-zinc-200" value="0" min="0">
                     </div>
-                    <div class="bg-white p-4 rounded-2xl border border-slate-100 text-center shadow-sm">
-                        <div class="text-[10px] font-black text-indigo-500 mb-1">硬拉 PR</div>
-                        <div id="pr-deadlift" class="text-lg font-black mono">--</div>
+                    <div class="bg-zinc-100 dark:bg-zinc-800 p-2.5 rounded-xl text-center">
+                        <label class="text-[9px] text-zinc-400 font-bold block mb-1">体感</label>
+                        <select id="sleep-tiredness" class="w-full bg-transparent text-center font-bold text-xs border-0 text-zinc-800 dark:text-zinc-200">
+                            <option value="refreshed">精神</option>
+                            <option value="normal" selected>正常</option>
+                            <option value="tired">疲惫</option>
+                        </select>
                     </div>
                 </div>
-                <div class="space-y-4">
-                    <div class="bg-white rounded-[1.5rem] p-5 card-shadow border border-slate-100"><h3 class="text-[13px] font-black text-slate-800 mb-3">总训练容量趋势 (KG)</h3><canvas id="volume-chart" height="180"></canvas></div>
-                    <div class="bg-white rounded-[1.5rem] p-5 card-shadow border border-slate-100"><h3 class="text-[13px] font-black text-slate-800 mb-3">SBD 力量趋势 (KG)</h3><canvas id="sbd-chart" height="180"></canvas></div>
-                    <div class="bg-white rounded-[1.5rem] p-5 card-shadow border border-slate-100"><h3 class="text-[13px] font-black text-slate-800 mb-3 text-orange-500">体重变化 (KG)</h3><canvas id="weight-chart" height="150"></canvas></div>
-                    <div class="bg-white rounded-[1.5rem] p-5 card-shadow border border-slate-100"><h3 class="text-[13px] font-black text-slate-800 mb-3 text-pink-500">体脂比例 (%)</h3><canvas id="fat-chart" height="150"></canvas></div>
-                </div>
+                <button id="btn-save-sleep" class="w-full bg-gradient-to-r from-violet-500 to-indigo-500 text-white py-3 rounded-xl font-black text-xs active:scale-[0.98] transition-transform shadow-lg shadow-violet-500/20">保存睡眠记录</button>
             </div>
-
-            <!-- 睡眠 -->
-            <div id="tab-sleep" class="tab-content p-4 space-y-6">
-                <div class="bg-white rounded-[2rem] p-6 border border-slate-100 card-shadow space-y-4">
-                    <div class="flex justify-between items-center">
-                        <h2 class="text-xl font-black text-slate-800">睡眠记录</h2>
-                        <input type="date" id="sleep-tab-date" class="text-[12px] font-black bg-slate-50 px-3 py-1.5 rounded-lg outline-none" onchange="loadSleepDataForDate(this.value)">
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-2">
-                            <label class="text-[10px] text-slate-400 font-black block uppercase tracking-wider">入睡时间 (滚轮/点击)</label>
-                            <div class="flex items-center gap-1 bg-slate-50 rounded-xl p-2 justify-center">
-                                <input type="text" id="sleep-tab-start-h" class="w-10 bg-transparent text-center font-black mono outline-none cursor-pointer" onwheel="handleWheel(event, 'sleep-tab-start-h', 23)" onclick="window.adjustValue('sleep-tab-start-h', 1, 23)" oncontextmenu="window.adjustValue('sleep-tab-start-h', -1, 23); return false;">
-                                <span class="font-black">:</span>
-                                <input type="text" id="sleep-tab-start-m" class="w-10 bg-transparent text-center font-black mono outline-none cursor-pointer" onwheel="handleWheel(event, 'sleep-tab-start-m', 59)" onclick="window.adjustValue('sleep-tab-start-m', 5, 59)" oncontextmenu="window.adjustValue('sleep-tab-start-m', -5, 59); return false;">
-                            </div>
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-[10px] text-slate-400 font-black block uppercase tracking-wider">醒来时间 (滚轮/点击)</label>
-                            <div class="flex items-center gap-1 bg-slate-50 rounded-xl p-2 justify-center">
-                                <input type="text" id="sleep-tab-end-h" class="w-10 bg-transparent text-center font-black mono outline-none cursor-pointer" onwheel="handleWheel(event, 'sleep-tab-end-h', 23)" onclick="window.adjustValue('sleep-tab-end-h', 1, 23)" oncontextmenu="window.adjustValue('sleep-tab-end-h', -1, 23); return false;">
-                                <span class="font-black">:</span>
-                                <input type="text" id="sleep-tab-end-m" class="w-10 bg-transparent text-center font-black mono outline-none cursor-pointer" onwheel="handleWheel(event, 'sleep-tab-end-m', 59)" onclick="window.adjustValue('sleep-tab-end-m', 5, 59)" oncontextmenu="window.adjustValue('sleep-tab-end-m', -5, 59); return false;">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-3 gap-2">
-                        <div class="bg-slate-50 p-2 rounded-xl text-center">
-                            <label class="text-[9px] text-slate-400 font-black block mb-1">梦境</label>
-                            <input type="number" id="sleep-tab-dreams" class="w-full bg-transparent text-center font-black mono outline-none" value="0">
-                        </div>
-                        <div class="bg-slate-50 p-2 rounded-xl text-center">
-                            <label class="text-[9px] text-slate-400 font-black block mb-1">中途醒来</label>
-                            <input type="number" id="sleep-tab-wakes" class="w-full bg-transparent text-center font-black mono outline-none" value="0">
-                        </div>
-                        <div class="bg-slate-50 p-2 rounded-xl text-center">
-                            <label class="text-[9px] text-slate-400 font-black block mb-1">体感</label>
-                            <select id="sleep-tab-tiredness" class="w-full bg-transparent text-center font-black outline-none text-[12px]">
-                                <option value="refreshed">精神</option>
-                                <option value="normal" selected>正常</option>
-                                <option value="tired">疲惫</option>
-                            </select>
-                        </div>
-                    </div>
-                    <button onclick="saveSleepFromTab()" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-black text-[13px] active:scale-95 transition-all">保存睡眠记录</button>
-                </div>
-
-                <div class="bg-white rounded-[1.5rem] p-5 card-shadow border border-slate-100">
-                    <h3 class="text-[13px] font-black text-slate-800 mb-3 text-purple-500">睡眠时长趋势 (小时)</h3>
-                    <canvas id="sleep-chart" height="150"></canvas>
-                </div>
-
-                <div class="bg-white rounded-[1.5rem] p-5 card-shadow border border-slate-100">
-                    <h3 class="text-[13px] font-black text-slate-800 mb-3 text-emerald-500">睡眠质量趋势 (体感)</h3>
-                    <canvas id="sleep-quality-chart" height="150"></canvas>
-                </div>
-
-                <div class="bg-white rounded-[2rem] p-6 border border-slate-100 card-shadow">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 id="sleep-calendar-title" class="text-xl font-black text-slate-800">睡眠质量日历</h2>
-                        <div class="flex gap-2">
-                            <button onclick="changeSleepMonth(-1)" class="w-8 h-8 flex items-center justify-center bg-slate-50 rounded-lg text-slate-500">←</button>
-                            <button onclick="changeSleepMonth(1)" class="w-8 h-8 flex items-center justify-center bg-slate-50 rounded-lg text-slate-500">→</button>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-black text-slate-300 mb-2">
-                        <div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div>
-                    </div>
-                    <div id="sleep-calendar-days" class="grid grid-cols-7 gap-y-3 gap-x-1 text-center"></div>
-                    <div class="mt-4 flex justify-center gap-4 text-[10px] font-bold">
-                        <div class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-emerald-400"></div>精神</div>
-                        <div class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-blue-400"></div>正常</div>
-                        <div class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-amber-400"></div>疲惫</div>
-                    </div>
-                </div>
+            <div class="glass-card p-5">
+                <h3 class="text-xs font-black text-violet-500 mb-3">睡眠时长趋势 (小时)</h3>
+                <canvas id="sleep-chart" height="150"></canvas>
             </div>
-
-            <!-- 动作库 -->
-            <div id="tab-library" class="tab-content p-4 space-y-4">
-                <div class="bg-white p-6 rounded-[2rem] card-shadow border border-slate-100">
-                    <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4">动作列表管理</h3>
-                    <div class="space-y-3">
-                        <input type="text" id="lib-new-name" placeholder="动作名称" class="w-full bg-slate-50 border-0 rounded-xl px-4 py-3 text-[13px] font-bold outline-none">
-                        <div class="flex gap-2">
-                            <select id="lib-new-group" class="flex-1 bg-slate-50 border-0 rounded-xl px-4 py-3 text-[13px] font-bold outline-none">
-                                <option>胸部</option><option>背部</option><option>腿部</option><option>肩部</option><option>手臂</option><option>核心</option><option>有氧</option>
-                            </select>
-                            <button onclick="addLibraryItem()" class="bg-slate-900 text-white px-6 py-3 rounded-xl text-[13px] font-black active:scale-95 transition-all">添加</button>
-                        </div>
-                    </div>
-                </div>
-                <div id="lib-list" class="bg-white rounded-[2rem] card-shadow border border-slate-100 overflow-hidden divide-y divide-slate-50"></div>
+            <div class="glass-card p-5">
+                <h3 class="text-xs font-black text-emerald-500 mb-3">睡眠质量趋势</h3>
+                <canvas id="sleep-quality-chart" height="150"></canvas>
             </div>
-
-            <!-- 设置 -->
-            <div id="tab-settings" class="tab-content p-4 space-y-4">
-                <!-- 数据迁移中心 (新增) -->
-                <div class="bg-slate-900 rounded-[2rem] p-6 card-shadow text-white space-y-4">
-                    <div class="flex items-center gap-3 mb-2">
-                        <span class="text-xl">🛡️</span>
-                        <h3 class="text-base font-black">数据安全中心</h3>
-                    </div>
-                    <p class="text-[11px] text-slate-400 font-bold leading-relaxed">
-                        为防止应用更新或浏览器清理导致记录丢失，请定期备份 JSON 数据。备份文件可跨设备、跨浏览器导入恢复。
-                    </p>
-                    <div class="grid grid-cols-2 gap-3">
-                        <button onclick="exportJSONBackup()" class="bg-blue-600 py-3 rounded-xl text-[12px] font-black active:scale-95 transition-all">导出 JSON 备份</button>
-                        <button onclick="document.getElementById('import-file').click()" class="bg-slate-700 py-3 rounded-xl text-[12px] font-black active:scale-95 transition-all">从 JSON 恢复</button>
-                        <input type="file" id="import-file" class="hidden" accept=".json" onchange="importJSONBackup(this)">
+            <div class="glass-card p-5">
+                <div class="flex justify-between items-center mb-5">
+                    <h2 id="sleep-cal-title" class="text-lg font-display font-black text-zinc-800 dark:text-zinc-100">睡眠日历</h2>
+                    <div class="flex gap-1.5">
+                        <button id="sleepcal-prev" class="w-8 h-8 flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 rounded-lg text-zinc-500 text-sm font-bold">←</button>
+                        <button id="sleepcal-next" class="w-8 h-8 flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 rounded-lg text-zinc-500 text-sm font-bold">→</button>
                     </div>
                 </div>
-
-                <div class="bg-white rounded-[2rem] p-6 card-shadow border border-slate-100 space-y-6">
-                    <div>
-                        <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3">个性化标语</h3>
-                        <textarea id="settings-banner" class="w-full bg-slate-50 p-4 rounded-xl text-[13px] font-bold outline-none border-0" rows="2"></textarea>
-                        <button onclick="updateSettings()" class="mt-3 w-full bg-blue-600 text-white py-3 rounded-xl font-black text-[13px] active:scale-95 transition-all">保存并更新</button>
-                    </div>
-                    <div class="pt-6 border-t border-slate-50 space-y-3">
-                        <button onclick="exportMarkdown()" class="w-full p-4 bg-blue-50 text-blue-600 rounded-xl text-[12px] font-black flex justify-between items-center">
-                            <span>导出 Markdown 预览 (用于分享)</span><span>📄</span>
-                        </button>
-                        <button onclick="clearData()" class="w-full p-4 bg-red-50 text-red-500 rounded-xl text-[12px] font-black">清空所有数据</button>
-                    </div>
+                <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-black text-zinc-300 dark:text-zinc-600 mb-2">
+                    <div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div>
                 </div>
-
-                <!-- Copyright Footer -->
-                <div class="mt-10 pt-6 border-t border-slate-100 text-center space-y-2 pb-10">
-                    <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest">FitLog v2.2</p>
-                    <p class="text-[11px] text-slate-400 font-bold">© 2024-2026 Xintong Han</p>
-                    <div class="flex justify-center gap-4 text-[11px] font-bold text-blue-500">
-                        <a href="https://xthan.github.io/fitlog/" target="_blank" class="hover:underline">Website</a>
-                        <a href="https://github.com/xthan/fitlog" target="_blank" class="hover:underline">GitHub</a>
-                    </div>
-                    <p class="text-[9px] text-slate-300 font-medium italic">Last Updated: 2026-02-24</p>
+                <div id="sleep-calendar-days" class="grid grid-cols-7 gap-y-2 gap-x-1 text-center"></div>
+                <div class="mt-4 flex justify-center gap-4 text-[10px] font-bold text-zinc-400">
+                    <div class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-emerald-400"></div>精神</div>
+                    <div class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-blue-400"></div>正常</div>
+                    <div class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-amber-400"></div>疲惫</div>
                 </div>
-            </div>
-        </main>
-
-        <!-- 编辑面板 -->
-        <div id="editor-overlay" class="fixed inset-0 bg-white z-[100] hidden flex flex-col translate-y-full transition-transform duration-500">
-            <div class="px-6 py-4 border-b flex justify-between items-center glass sticky top-0 z-10 header-pt">
-                <button onclick="closeEditor(true)" class="text-slate-400 font-black text-[13px] px-2">取消</button>
-                <h2 id="editor-title" class="font-black text-base text-slate-800">编辑记录</h2>
-                <button onclick="saveWorkout()" class="bg-blue-600 text-white px-6 py-2 rounded-full font-black text-[13px]">完成</button>
-            </div>
-            
-            <div class="flex-1 overflow-y-auto px-4 py-6 space-y-6 bg-slate-50/50 pb-32">
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm"><label class="text-[10px] text-slate-400 font-black block mb-1">日期</label><input type="date" id="edit-date" class="w-full text-[13px] font-black outline-none bg-transparent" oninput="handleEditorInput()"></div>
-                    <div class="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm"><label class="text-[10px] text-slate-400 font-black block mb-1">心情反馈</label><select id="edit-mood" class="w-full text-[15px] font-black outline-none bg-transparent" oninput="handleEditorInput()"><option>😊</option><option>🔥</option><option>😴</option><option>😤</option><option>🤕</option></select></div>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm"><label class="text-[10px] text-slate-400 font-black block mb-1">体重 (KG)</label><input type="number" step="0.1" id="edit-weight" class="w-full text-[13px] font-black outline-none bg-transparent mono" placeholder="0.0" oninput="handleEditorInput()"></div>
-                    <div class="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm"><label class="text-[10px] text-slate-400 font-black block mb-1">体脂 (%)</label><input type="number" step="0.1" id="edit-fat" class="w-full text-[13px] font-black outline-none bg-transparent mono" placeholder="0.0" oninput="handleEditorInput()"></div>
-                </div>
-                <div id="edit-exercises" class="space-y-4"></div>
-                <div class="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm">
-                    <h3 class="font-black text-slate-800 text-base mb-4">常用动作库</h3>
-                    <div id="edit-lib-grid" class="grid grid-cols-2 gap-2"></div>
-                </div>
-                <textarea id="edit-notes" placeholder="记录此刻的心情或备注..." class="w-full bg-white p-5 rounded-[1.5rem] border border-slate-100 min-h-[100px] text-[13px] font-bold outline-none" oninput="handleEditorInput()"></textarea>
-                <button id="delete-log-btn" onclick="confirmDeleteCurrentLog()" class="w-full py-4 bg-white text-red-500 rounded-2xl font-black border border-red-50 text-[13px] hidden">删除本条记录</button>
             </div>
         </div>
 
-        <nav class="flex justify-around items-center bg-white/95 backdrop-blur-xl border-t border-slate-100 absolute bottom-0 w-full z-50">
-            <button onclick="switchTab('home')" class="nav-btn active-nav flex-1 flex flex-col items-center gap-1 transition-all" data-tab="home"><div class="nav-text text-[15px] font-black">首页</div><div class="nav-dot w-1.5 h-1.5 bg-blue-600 rounded-full opacity-0 scale-0 transition-all"></div></button>
-            <button onclick="switchTab('calendar')" class="nav-btn flex-1 flex flex-col items-center gap-1 transition-all" data-tab="calendar"><div class="nav-text text-[15px] font-black">日历</div><div class="nav-dot w-1.5 h-1.5 bg-blue-600 rounded-full opacity-0 scale-0 transition-all"></div></button>
-            <button onclick="switchTab('sleep')" class="nav-btn flex-1 flex flex-col items-center gap-1 transition-all" data-tab="sleep"><div class="nav-text text-[15px] font-black">睡眠</div><div class="nav-dot w-1.5 h-1.5 bg-blue-600 rounded-full opacity-0 scale-0 transition-all"></div></button>
-            <button onclick="switchTab('stats')" class="nav-btn flex-1 flex flex-col items-center gap-1 transition-all" data-tab="stats"><div class="nav-text text-[15px] font-black">统计</div><div class="nav-dot w-1.5 h-1.5 bg-blue-600 rounded-full opacity-0 scale-0 transition-all"></div></button>
-            <button onclick="switchTab('library')" class="nav-btn flex-1 flex flex-col items-center gap-1 transition-all" data-tab="library"><div class="nav-text text-[15px] font-black">动作库</div><div class="nav-dot w-1.5 h-1.5 bg-blue-600 rounded-full opacity-0 scale-0 transition-all"></div></button>
-            <button onclick="switchTab('settings')" class="nav-btn flex-1 flex flex-col items-center gap-1 transition-all" data-tab="settings"><div class="nav-text text-[15px] font-black">设置</div><div class="nav-dot w-1.5 h-1.5 bg-blue-600 rounded-full opacity-0 scale-0 transition-all"></div></button>
-        </nav>
+        <!-- ─── 统计 ─── -->
+        <div id="tab-stats" class="tab-content p-4 space-y-5">
+            <div class="grid grid-cols-3 gap-2">
+                <div class="glass-card p-3 text-center">
+                    <div class="text-[10px] font-black text-rose-500 mb-1">深蹲 PR</div>
+                    <div id="pr-squat" class="text-lg font-display font-black mono text-zinc-800 dark:text-zinc-100">--</div>
+                </div>
+                <div class="glass-card p-3 text-center">
+                    <div class="text-[10px] font-black text-blue-500 mb-1">卧推 PR</div>
+                    <div id="pr-bench" class="text-lg font-display font-black mono text-zinc-800 dark:text-zinc-100">--</div>
+                </div>
+                <div class="glass-card p-3 text-center">
+                    <div class="text-[10px] font-black text-violet-500 mb-1">硬拉 PR</div>
+                    <div id="pr-deadlift" class="text-lg font-display font-black mono text-zinc-800 dark:text-zinc-100">--</div>
+                </div>
+            </div>
+            <div class="glass-card p-5"><h3 class="text-xs font-black text-zinc-800 dark:text-zinc-200 mb-3">总训练容量趋势 (KG)</h3><canvas id="volume-chart" height="180"></canvas></div>
+            <div class="glass-card p-5"><h3 class="text-xs font-black text-zinc-800 dark:text-zinc-200 mb-3">SBD 力量趋势 (KG)</h3><canvas id="sbd-chart" height="180"></canvas></div>
+            <div class="glass-card p-5"><h3 class="text-xs font-black text-orange-500 mb-3">体重变化 (KG)</h3><canvas id="weight-chart" height="150"></canvas></div>
+            <div class="glass-card p-5"><h3 class="text-xs font-black text-pink-500 mb-3">体脂比例 (%)</h3><canvas id="fat-chart" height="150"></canvas></div>
+        </div>
+
+        <!-- ─── 动作库 ─── -->
+        <div id="tab-library" class="tab-content p-4 space-y-4">
+            <div class="glass-card p-5 space-y-3">
+                <h3 class="text-[10px] font-black text-zinc-400 uppercase tracking-widest">添加动作</h3>
+                <input type="text" id="lib-new-name" placeholder="动作名称" class="w-full bg-zinc-100 dark:bg-zinc-800 rounded-xl px-4 py-3 text-sm font-bold border-0 text-zinc-800 dark:text-zinc-200 placeholder-zinc-400">
+                <div class="flex gap-2">
+                    <select id="lib-new-group" class="flex-1 bg-zinc-100 dark:bg-zinc-800 rounded-xl px-4 py-3 text-sm font-bold border-0 text-zinc-800 dark:text-zinc-200">
+                        <option>胸部</option><option>背部</option><option>腿部</option><option>肩部</option><option>手臂</option><option>核心</option><option>有氧</option>
+                    </select>
+                    <button id="btn-add-lib" class="bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 px-6 py-3 rounded-xl text-xs font-black active:scale-95 transition-transform">添加</button>
+                </div>
+            </div>
+            <div id="lib-list" class="glass-card overflow-hidden divide-y divide-zinc-100 dark:divide-zinc-800/50"></div>
+        </div>
+
+        <!-- ─── 设置 ─── -->
+        <div id="tab-settings" class="tab-content p-4 space-y-4">
+            <div class="bg-zinc-900 dark:bg-zinc-800/80 rounded-2xl p-5 text-white space-y-4">
+                <div class="flex items-center gap-3">
+                    <span class="text-lg">🛡️</span>
+                    <h3 class="font-display font-black">数据安全中心</h3>
+                </div>
+                <p class="text-[11px] text-zinc-400 font-bold leading-relaxed">定期备份 JSON 数据可防止丢失。备份文件支持跨设备导入恢复。</p>
+                <div class="grid grid-cols-2 gap-2">
+                    <button id="btn-export-json" class="bg-blue-600 py-3 rounded-xl text-xs font-black active:scale-95 transition-transform">导出 JSON 备份</button>
+                    <button id="btn-import-trigger" class="bg-zinc-700 py-3 rounded-xl text-xs font-black active:scale-95 transition-transform">从 JSON 恢复</button>
+                    <input type="file" id="import-file" class="hidden" accept=".json">
+                </div>
+            </div>
+            <div class="glass-card p-5 space-y-5">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-sm font-black text-zinc-800 dark:text-zinc-100">深色模式</h3>
+                        <p class="text-[10px] text-zinc-400 mt-0.5">切换应用外观主题</p>
+                    </div>
+                    <button id="btn-theme-toggle" class="w-12 h-7 rounded-full bg-zinc-200 dark:bg-orange-500 relative transition-colors duration-300">
+                        <div class="w-5 h-5 rounded-full bg-white shadow-md absolute top-1 left-1 dark:left-6 transition-all duration-300"></div>
+                    </button>
+                </div>
+                <div class="border-t border-zinc-100 dark:border-zinc-800 pt-5">
+                    <h3 class="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-3">个性化标语</h3>
+                    <textarea id="settings-banner" class="w-full bg-zinc-100 dark:bg-zinc-800 p-4 rounded-xl text-sm font-bold border-0 text-zinc-800 dark:text-zinc-200 resize-none" rows="2"></textarea>
+                    <button id="btn-save-banner" class="mt-3 w-full bg-gradient-to-r from-orange-500 to-amber-500 text-white py-3 rounded-xl font-black text-xs active:scale-[0.98] transition-transform">保存标语</button>
+                </div>
+                <div class="border-t border-zinc-100 dark:border-zinc-800 pt-5 space-y-2.5">
+                    <button id="btn-export-md" class="w-full p-4 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl text-xs font-black flex justify-between items-center">
+                        <span>导出 Markdown 预览</span><span>📄</span>
+                    </button>
+                    <button id="btn-clear-data" class="w-full p-4 bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 rounded-xl text-xs font-black">清空所有数据</button>
+                </div>
+            </div>
+            <div class="text-center space-y-2 py-8">
+                <p class="text-[10px] font-display font-black text-zinc-300 dark:text-zinc-700 uppercase tracking-[0.2em]">FitLog v3.0</p>
+                <p class="text-[11px] text-zinc-400 dark:text-zinc-600 font-bold">&copy; 2024-2026 Xintong Han</p>
+                <div class="flex justify-center gap-4 text-[11px] font-bold text-orange-500">
+                    <a href="https://xthan.github.io/fitlog/" target="_blank" class="hover:underline">Website</a>
+                    <a href="https://github.com/xthan/fitlog" target="_blank" class="hover:underline">GitHub</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ═══ Editor Overlay ═══ -->
+    <div id="editor-overlay" class="fixed inset-0 z-[100] flex flex-col bg-zinc-50 dark:bg-zinc-950 hidden" style="top: env(safe-area-inset-top);">
+        <div class="glass px-5 py-2.5 flex justify-between items-center shrink-0 z-10">
+            <button id="btn-editor-cancel" class="text-zinc-400 font-bold text-sm px-1">取消</button>
+            <h2 id="editor-title" class="font-display font-black text-sm text-zinc-800 dark:text-zinc-100">记录训练</h2>
+            <button id="btn-editor-save" class="bg-gradient-to-r from-orange-500 to-amber-500 text-white px-5 py-1.5 rounded-full font-black text-xs shadow-lg shadow-orange-500/20">完成</button>
+        </div>
+        <div id="editor-scroll" class="flex-1 overflow-y-auto px-4 py-4 space-y-4 pb-24">
+            <div class="grid grid-cols-2 gap-2.5">
+                <div class="glass-card p-3"><label class="text-[10px] text-zinc-400 font-bold block mb-1">日期</label><input type="date" id="edit-date" class="w-full text-sm font-bold bg-transparent border-0 text-zinc-800 dark:text-zinc-200"></div>
+                <div class="glass-card p-3"><label class="text-[10px] text-zinc-400 font-bold block mb-1">心情</label><select id="edit-mood" class="w-full text-base font-bold bg-transparent border-0"><option>😊</option><option>🔥</option><option>😴</option><option>😤</option><option>🤕</option></select></div>
+            </div>
+            <div class="grid grid-cols-2 gap-2.5">
+                <div class="glass-card p-3"><label class="text-[10px] text-zinc-400 font-bold block mb-1">体重 (KG)</label><input type="number" step="0.1" id="edit-weight" class="w-full text-sm font-bold mono bg-transparent border-0 text-zinc-800 dark:text-zinc-200" placeholder="0.0"></div>
+                <div class="glass-card p-3"><label class="text-[10px] text-zinc-400 font-bold block mb-1">体脂 (%)</label><input type="number" step="0.1" id="edit-fat" class="w-full text-sm font-bold mono bg-transparent border-0 text-zinc-800 dark:text-zinc-200" placeholder="0.0"></div>
+            </div>
+            <div id="edit-exercises" class="space-y-3"></div>
+
+            <!-- Rest Timer Toggle -->
+            <div class="flex items-center justify-center">
+                <button id="btn-timer-toggle" class="flex items-center gap-2 px-5 py-2.5 rounded-full glass-card text-xs font-black text-zinc-500 dark:text-zinc-400 active:scale-95 transition-transform">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    休息计时器
+                </button>
+            </div>
+
+            <!-- Quick Add Library (with search) -->
+            <div class="glass-card p-5">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="font-display font-black text-zinc-800 dark:text-zinc-100 text-sm">动作库</h3>
+                </div>
+                <input type="text" id="edit-lib-search" placeholder="搜索动作..." class="w-full bg-zinc-100 dark:bg-zinc-800 rounded-xl px-4 py-2.5 text-xs font-bold border-0 mb-3 text-zinc-800 dark:text-zinc-200 placeholder-zinc-400">
+                <div id="edit-lib-grid" class="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto"></div>
+            </div>
+            <textarea id="edit-notes" placeholder="记录此刻的心情或备注..." class="w-full glass-card p-4 min-h-[80px] text-sm font-bold border-0 text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 resize-none"></textarea>
+            <button id="btn-delete-log" class="w-full py-3.5 bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 rounded-xl font-black text-xs hidden">删除本条记录</button>
+        </div>
     </div>
 
-    <script>
-        const getLocalToday = () => {
-            const d = new Date();
-            return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split('T')[0];
+    <!-- ═══ Rest Timer Widget ═══ -->
+    <div id="timer-widget" class="fixed bottom-28 right-4 z-[200] hidden" style="margin-bottom: var(--safe-bottom)">
+        <div class="glass-card p-4 w-44 text-center shadow-2xl" style="animation: scaleIn 0.3s cubic-bezier(0.16,1,0.3,1)">
+            <button id="btn-timer-close" class="absolute top-2 right-3 text-zinc-400 text-lg font-bold leading-none">&times;</button>
+            <svg viewBox="0 0 100 100" class="w-20 h-20 mx-auto">
+                <circle cx="50" cy="50" r="44" fill="none" stroke-width="5" class="stroke-zinc-200 dark:stroke-zinc-700"/>
+                <circle id="timer-ring" cx="50" cy="50" r="44" fill="none" stroke-width="5" stroke-linecap="round" class="stroke-orange-500" style="stroke-dasharray:276.46;stroke-dashoffset:0" transform="rotate(-90 50 50)"/>
+            </svg>
+            <div id="timer-display" class="text-xl font-display font-black mono mt-2 text-zinc-800 dark:text-zinc-100">1:30</div>
+            <div class="flex gap-1.5 mt-2">
+                <button data-timer-set="60" class="flex-1 py-1.5 text-[10px] font-bold rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-500 active:scale-90 transition-transform">1:00</button>
+                <button data-timer-set="90" class="flex-1 py-1.5 text-[10px] font-bold rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-500 active:scale-90 transition-transform">1:30</button>
+                <button data-timer-set="120" class="flex-1 py-1.5 text-[10px] font-bold rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-500 active:scale-90 transition-transform">2:00</button>
+                <button data-timer-set="180" class="flex-1 py-1.5 text-[10px] font-bold rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-500 active:scale-90 transition-transform">3:00</button>
+            </div>
+            <button id="btn-timer-action" class="w-full mt-2 py-2 text-xs font-black rounded-lg bg-orange-500 text-white active:scale-95 transition-transform">开始</button>
+        </div>
+    </div>
+
+    <!-- ═══ Bottom Nav ═══ -->
+    <nav class="flex items-stretch glass absolute bottom-0 w-full z-50 border-t border-zinc-200/50 dark:border-zinc-800/50">
+        <button data-nav="home" class="nav-item active flex-1 flex flex-col items-center justify-center gap-0 py-1.5 relative">
+            <div class="nav-indicator absolute top-0 left-1/2 -translate-x-1/2 w-8 h-[3px] bg-orange-500 rounded-b-full transform scale-x-0 transition-transform"></div>
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
+            <span class="nav-label text-[9px] font-bold text-zinc-400 mt-0.5">首页</span>
+        </button>
+        <button data-nav="calendar" class="nav-item flex-1 flex flex-col items-center justify-center gap-0 py-1.5 relative">
+            <div class="nav-indicator absolute top-0 left-1/2 -translate-x-1/2 w-8 h-[3px] bg-orange-500 rounded-b-full transform scale-x-0 transition-transform"></div>
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            <span class="nav-label text-[9px] font-bold text-zinc-400 mt-0.5">日历</span>
+        </button>
+        <button data-nav="sleep" class="nav-item flex-1 flex flex-col items-center justify-center gap-0 py-1.5 relative">
+            <div class="nav-indicator absolute top-0 left-1/2 -translate-x-1/2 w-8 h-[3px] bg-orange-500 rounded-b-full transform scale-x-0 transition-transform"></div>
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+            <span class="nav-label text-[9px] font-bold text-zinc-400 mt-0.5">睡眠</span>
+        </button>
+        <button data-nav="stats" class="nav-item flex-1 flex flex-col items-center justify-center gap-0 py-1.5 relative">
+            <div class="nav-indicator absolute top-0 left-1/2 -translate-x-1/2 w-8 h-[3px] bg-orange-500 rounded-b-full transform scale-x-0 transition-transform"></div>
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+            <span class="nav-label text-[9px] font-bold text-zinc-400 mt-0.5">统计</span>
+        </button>
+        <button data-nav="library" class="nav-item flex-1 flex flex-col items-center justify-center gap-0 py-1.5 relative">
+            <div class="nav-indicator absolute top-0 left-1/2 -translate-x-1/2 w-8 h-[3px] bg-orange-500 rounded-b-full transform scale-x-0 transition-transform"></div>
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            <span class="nav-label text-[9px] font-bold text-zinc-400 mt-0.5">动作库</span>
+        </button>
+        <button data-nav="settings" class="nav-item flex-1 flex flex-col items-center justify-center gap-0 py-1.5 relative">
+            <div class="nav-indicator absolute top-0 left-1/2 -translate-x-1/2 w-8 h-[3px] bg-orange-500 rounded-b-full transform scale-x-0 transition-transform"></div>
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
+            <span class="nav-label text-[9px] font-bold text-zinc-400 mt-0.5">设置</span>
+        </button>
+    </nav>
+</div>
+
+<script>
+'use strict';
+
+// ═══════════════════════════════════════════════════════════════
+//  CONSTANTS
+// ═══════════════════════════════════════════════════════════════
+
+const STORAGE = {
+    DATA: 'fitlog_v2_data',
+    LIB: 'fitlog_lib_v2',
+    BANNER: 'fitlog_banner',
+    DRAFT: 'fitlog_editor_draft',
+    THEME: 'fitlog_theme'
+};
+
+const GROUP_COLORS = {
+    '胸部': '#3b82f6', '背部': '#10b981', '腿部': '#8b5cf6',
+    '肩部': '#f59e0b', '手臂': '#ec4899', '核心': '#ef4444', '有氧': '#06b6d4'
+};
+
+const MONTH_NAMES = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
+
+const INITIAL_LIB = [
+    {id:'1',name:'杠铃卧推',group:'胸部'},{id:'2',name:'哑铃卧推',group:'胸部'},
+    {id:'3',name:'上斜哑铃卧推',group:'胸部'},{id:'4',name:'器械夹胸',group:'胸部'},
+    {id:'5',name:'双杠臂屈伸',group:'胸部'},{id:'6',name:'引体向上',group:'背部'},
+    {id:'7',name:'杠铃划船',group:'背部'},{id:'8',name:'高位下拉',group:'背部'},
+    {id:'9',name:'传统硬拉',group:'背部'},{id:'10',name:'单臂哑铃划船',group:'背部'},
+    {id:'11',name:'杠铃深蹲',group:'腿部'},{id:'12',name:'腿举',group:'腿部'},
+    {id:'13',name:'腿屈伸',group:'腿部'},{id:'14',name:'腿弯举',group:'腿部'},
+    {id:'15',name:'保加利亚分腿蹲',group:'腿部'},{id:'16',name:'站姿推举',group:'肩部'},
+    {id:'17',name:'哑铃侧平举',group:'肩部'},{id:'18',name:'哑铃前平举',group:'肩部'},
+    {id:'19',name:'绳索面拉',group:'肩部'},{id:'20',name:'哑铃弯举',group:'手臂'},
+    {id:'21',name:'杠铃弯举',group:'手臂'},{id:'22',name:'绳索下压',group:'手臂'},
+    {id:'23',name:'碎头者',group:'手臂'},{id:'24',name:'悬垂举腿',group:'核心'},
+    {id:'25',name:'卷腹',group:'核心'},{id:'26',name:'平板支撑',group:'核心'},
+    {id:'27',name:'跑步机',group:'有氧'},{id:'28',name:'椭圆机',group:'有氧'},
+    {id:'29',name:'动感单车',group:'有氧'},{id:'30',name:'划船机',group:'有氧'}
+];
+
+const TAB_ORDER = ['home','calendar','sleep','stats','library','settings'];
+
+// ═══════════════════════════════════════════════════════════════
+//  UTILITIES
+// ═══════════════════════════════════════════════════════════════
+
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => document.querySelectorAll(s);
+
+function getToday() {
+    const d = new Date();
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split('T')[0];
+}
+
+function formatISO(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
+function debounce(fn, ms) {
+    let t;
+    return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+}
+
+function calcVolume(log) {
+    if (!log.exercises) return 0;
+    return log.exercises.reduce((a, ex) =>
+        a + ex.sets.reduce((sa, s) => sa + ((s.weight || 0) * (s.reps || 0)), 0), 0);
+}
+
+function calcSleepDuration(sleep) {
+    if (!sleep || !sleep.start || !sleep.end) return 0;
+    const [sh, sm] = sleep.start.split(':').map(Number);
+    const [eh, em] = sleep.end.split(':').map(Number);
+    let diff = (eh * 60 + em) - (sh * 60 + sm);
+    if (diff < 0) diff += 1440;
+    return +(diff / 60).toFixed(1);
+}
+
+function calcWeekCount(logs) {
+    const workoutDates = new Set(logs.filter(l => l.exercises && l.exercises.length > 0).map(l => l.date));
+    const today = new Date();
+    const day = today.getDay(); // 0=Sun
+    const mondayOffset = day === 0 ? -6 : 1 - day;
+    const monday = new Date(today);
+    monday.setDate(today.getDate() + mondayOffset);
+    monday.setHours(0, 0, 0, 0);
+
+    let count = 0;
+    for (let i = 0; i < 7; i++) {
+        const d = new Date(monday);
+        d.setDate(monday.getDate() + i);
+        if (workoutDates.has(formatISO(d))) count++;
+    }
+    return count;
+}
+
+function safeJSON(str, fallback) {
+    try { return JSON.parse(str); } catch { return fallback; }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  DATA MANAGER
+// ═══════════════════════════════════════════════════════════════
+
+const Data = {
+    state: { logs: [], library: [], banner: '' },
+
+    load() {
+        try {
+            this.state.logs = safeJSON(localStorage.getItem(STORAGE.DATA), []);
+            this.state.library = safeJSON(localStorage.getItem(STORAGE.LIB), INITIAL_LIB);
+            this.state.banner = localStorage.getItem(STORAGE.BANNER) || '独爱瑜伽裤';
+            // Validate logs array
+            if (!Array.isArray(this.state.logs)) this.state.logs = [];
+            if (!Array.isArray(this.state.library)) this.state.library = INITIAL_LIB;
+        } catch (e) {
+            console.error('Data load error:', e);
+            Toast.show('数据加载异常，使用默认值', 'error');
+            this.state.logs = [];
+            this.state.library = INITIAL_LIB;
+            this.state.banner = '独爱瑜伽裤';
+        }
+    },
+
+    saveLogs() {
+        try { localStorage.setItem(STORAGE.DATA, JSON.stringify(this.state.logs)); }
+        catch (e) { Toast.show('保存失败: ' + e.message, 'error'); }
+    },
+
+    saveLib() {
+        try { localStorage.setItem(STORAGE.LIB, JSON.stringify(this.state.library)); }
+        catch (e) { Toast.show('保存失败', 'error'); }
+    },
+
+    saveBanner() {
+        try { localStorage.setItem(STORAGE.BANNER, this.state.banner); }
+        catch (e) { Toast.show('保存失败', 'error'); }
+    },
+
+    saveDraft(data) {
+        try { if (data) localStorage.setItem(STORAGE.DRAFT, JSON.stringify(data)); }
+        catch (e) { /* silent */ }
+    },
+
+    loadDraft() {
+        return safeJSON(localStorage.getItem(STORAGE.DRAFT), null);
+    },
+
+    clearDraft() {
+        localStorage.removeItem(STORAGE.DRAFT);
+    }
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  TOAST NOTIFICATIONS
+// ═══════════════════════════════════════════════════════════════
+
+const Toast = {
+    show(msg, type = 'success') {
+        const container = $('#toasts');
+        if (!container) return;
+        const colors = {
+            success: 'bg-emerald-500', error: 'bg-rose-500',
+            info: 'bg-sky-500', warning: 'bg-amber-500'
         };
+        const el = document.createElement('div');
+        el.className = `toast-enter px-5 py-3 rounded-2xl text-white text-xs font-bold shadow-xl pointer-events-auto ${colors[type] || colors.info}`;
+        el.textContent = msg;
+        container.appendChild(el);
+        setTimeout(() => {
+            el.classList.remove('toast-enter');
+            el.classList.add('toast-exit');
+            setTimeout(() => el.remove(), 300);
+        }, 2500);
+    }
+};
 
-        const INITIAL_LIB = [
-            { id: '1', name: '杠铃卧推', group: '胸部' }, { id: '2', name: '哑铃卧推', group: '胸部' }, 
-            { id: '3', name: '上斜哑铃卧推', group: '胸部' }, { id: '4', name: '器械夹胸', group: '胸部' },
-            { id: '5', name: '双杠臂屈伸', group: '胸部' }, { id: '6', name: '引体向上', group: '背部' }, 
-            { id: '7', name: '杠铃划船', group: '背部' }, { id: '8', name: '高位下拉', group: '背部' }, 
-            { id: '9', name: '传统硬拉', group: '背部' }, { id: '10', name: '单臂哑铃划船', group: '背部' },
-            { id: '11', name: '杠铃深蹲', group: '腿部' }, { id: '12', name: '腿举', group: '腿部' }, 
-            { id: '13', name: '腿屈伸', group: '腿部' }, { id: '14', name: '腿弯举', group: '腿部' },
-            { id: '15', name: '保加利亚分腿蹲', group: '腿部' }, { id: '16', name: '站姿推举', group: '肩部' }, 
-            { id: '17', name: '哑铃侧平举', group: '肩部' }, { id: '18', name: '哑铃前平举', group: '肩部' }, 
-            { id: '19', name: '绳索面拉', group: '肩部' }, { id: '20', name: '哑铃弯举', group: '手臂' }, 
-            { id: '21', name: '杠铃弯举', group: '手臂' }, { id: '22', name: '绳索下压', group: '手臂' }, 
-            { id: '23', name: '碎头者', group: '手臂' }, { id: '24', name: '悬垂举腿', group: '核心' }, 
-            { id: '25', name: '卷腹', group: '核心' }, { id: '26', name: '平板支撑', group: '核心' },
-            { id: '27', name: '跑步机', group: '有氧' }, { id: '28', name: '椭圆机', group: '有氧' },
-            { id: '29', name: '动感单车', group: '有氧' }, { id: '30', name: '划船机', group: '有氧' }
-        ];
+// ═══════════════════════════════════════════════════════════════
+//  THEME MANAGER
+// ═══════════════════════════════════════════════════════════════
 
-        let appState = {
-            logs: JSON.parse(localStorage.getItem('fitlog_v2_data') || '[]'),
-            library: JSON.parse(localStorage.getItem('fitlog_lib_v2') || JSON.stringify(INITIAL_LIB)),
-            banner: localStorage.getItem('fitlog_banner') || '记录蜕变，见证更强的自己！'
+const Theme = {
+    isDark: false,
+
+    load() {
+        const saved = localStorage.getItem(STORAGE.THEME);
+        this.isDark = saved ? saved === 'dark' : false;
+        this.apply();
+    },
+
+    toggle() {
+        this.isDark = !this.isDark;
+        localStorage.setItem(STORAGE.THEME, this.isDark ? 'dark' : 'light');
+        this.apply();
+        // Update charts colors
+        updateChartDefaults();
+    },
+
+    apply() {
+        document.documentElement.classList.toggle('dark', this.isDark);
+        $('meta[name="theme-color"]').content = this.isDark ? '#09090B' : '#fafafa';
+        document.body.style.background = this.isDark ? '#09090B' : '#fafafa';
+    }
+};
+
+function updateChartDefaults() {
+    const isDark = Theme.isDark;
+    Chart.defaults.color = isDark ? '#52525b' : '#a1a1aa';
+    Chart.defaults.borderColor = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.06)';
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  CHART MANAGER
+// ═══════════════════════════════════════════════════════════════
+
+const Charts = {
+    instances: {},
+
+    create(id, config) {
+        if (this.instances[id]) {
+            this.instances[id].destroy();
+            delete this.instances[id];
+        }
+        const canvas = document.getElementById(id);
+        if (!canvas) return null;
+        this.instances[id] = new Chart(canvas, config);
+        return this.instances[id];
+    },
+
+    destroyAll() {
+        Object.values(this.instances).forEach(c => { try { c.destroy(); } catch {} });
+        this.instances = {};
+    },
+
+    zoomOpts() {
+        return {
+            pan: { enabled: true, mode: 'x' },
+            zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' }
         };
+    }
+};
 
-        const COLORS = { '胸部': '#3b82f6', '背部': '#10b981', '腿部': '#8b5cf6', '肩部': '#f59e0b', '手臂': '#ec4899', '核心': '#ef4444', '有氧': '#06b6d4', '睡眠': '#8b5cf6' };
-        let currentMonth = new Date();
-        let currentSleepMonth = new Date();
-        let currentEditLog = null;
-        let charts = { sbd: null, weight: null, fat: null, volume: null, sleep: null, sleepQuality: null };
+// ═══════════════════════════════════════════════════════════════
+//  TAB ROUTER
+// ═══════════════════════════════════════════════════════════════
 
-        window.handleWheel = (e, id, max) => {
-            e.preventDefault();
-            const delta = e.deltaY < 0 ? 1 : -1;
-            window.adjustValue(id, delta, max);
-        };
+const Router = {
+    current: 'home',
 
-        window.adjustValue = (id, delta, max) => {
-            const input = document.getElementById(id);
-            let val = parseInt(input.value) || 0;
-            val += delta;
-            if (val > max) val = 0;
-            if (val < 0) val = max;
-            input.value = String(val).padStart(2, '0');
-            if (!id.includes('tab')) {
-                handleEditorInput();
-            }
-        };
+    switchTo(tab) {
+        if (!TAB_ORDER.includes(tab)) return;
+        this.current = tab;
 
-        function calculateSleepDuration(sleep) {
-            if (!sleep || !sleep.start || !sleep.end) return 0;
-            const start = sleep.start.split(':').map(Number);
-            const end = sleep.end.split(':').map(Number);
-            let diff = (end[0] * 60 + end[1]) - (start[0] * 60 + start[1]);
-            if (diff < 0) diff += 24 * 60;
-            return (diff / 60).toFixed(1);
+        // Update content
+        $$('.tab-content').forEach(el => el.classList.remove('active'));
+        const target = $(`#tab-${tab}`);
+        if (target) target.classList.add('active');
+
+        // Update nav
+        $$('.nav-item').forEach(el => {
+            const isActive = el.dataset.nav === tab;
+            el.classList.toggle('active', isActive);
+            el.querySelector('svg').style.color = isActive ? 'var(--accent)' : '';
+        });
+
+        // Scroll to top
+        $('#main-scroll').scrollTop = 0;
+
+        // Lazy render
+        if (tab === 'home') renderDashboard();
+        else if (tab === 'calendar') renderCalendar();
+        else if (tab === 'stats') renderStats();
+        else if (tab === 'library') renderLibrary();
+        else if (tab === 'sleep') renderSleepTab();
+    }
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  DASHBOARD RENDERER
+// ═══════════════════════════════════════════════════════════════
+
+function renderDashboard() {
+    const logs = Data.state.logs;
+    const workoutLogs = logs.filter(l => l.exercises && l.exercises.length > 0);
+    const sorted = [...workoutLogs].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    // Stats
+    $('#stat-total').textContent = workoutLogs.length;
+    const now = new Date();
+    $('#stat-month').textContent = workoutLogs.filter(l => {
+        const d = new Date(l.date.replace(/-/g, '/'));
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    }).length;
+    const weekCount = calcWeekCount(logs);
+    const weekEl = $('#stat-week');
+    weekEl.textContent = weekCount;
+    weekEl.style.color = weekCount > 0 ? '#f97316' : '#a1a1aa';
+
+    // Log list
+    const list = $('#log-list');
+    if (!sorted.length) {
+        list.innerHTML = `
+            <div class="py-16 text-center">
+                <div class="text-4xl mb-3 opacity-30">🏋️</div>
+                <p class="text-sm font-bold text-zinc-300 dark:text-zinc-600 italic">还没有训练记录</p>
+                <p class="text-xs text-zinc-300 dark:text-zinc-700 mt-1">点击上方按钮开始第一次记录</p>
+            </div>`;
+        return;
+    }
+
+    list.innerHTML = sorted.map(log => `
+        <div class="glass-card p-5 space-y-3 card-press cursor-pointer" data-edit-log="${log.id}">
+            <div class="flex justify-between items-start">
+                <div class="flex items-center gap-3">
+                    <span class="text-3xl leading-none">${log.mood || '😊'}</span>
+                    <div>
+                        <h3 class="font-display font-black text-sm text-zinc-800 dark:text-zinc-100">${log.date}</h3>
+                        <p class="text-[10px] font-bold text-zinc-400 dark:text-zinc-600 tracking-wider mt-0.5">
+                            容量 ${calcVolume(log).toLocaleString()}kg${log.weight ? ` · ${log.weight}kg` : ''}${log.sleep ? ` · 💤 ${calcSleepDuration(log.sleep)}h` : ''}
+                        </p>
+                    </div>
+                </div>
+                <button class="px-3 py-1 text-orange-500 font-bold text-[10px] bg-orange-50 dark:bg-orange-500/10 rounded-full" data-edit-log="${log.id}">编辑</button>
+            </div>
+            ${log.notes ? `<div class="bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-xl border-l-2 border-zinc-200 dark:border-zinc-700"><p class="text-[11px] text-zinc-500 dark:text-zinc-400 font-medium italic leading-relaxed">"${log.notes}"</p></div>` : ''}
+            <div class="space-y-1.5">
+                ${log.exercises.map(ex => `
+                    <div class="bg-zinc-50 dark:bg-zinc-800/40 px-3 py-2.5 rounded-xl flex items-center justify-between">
+                        <div class="flex items-center gap-2 flex-1 min-w-0">
+                            <div class="w-2 h-2 rounded-full shrink-0" style="background:${GROUP_COLORS[ex.group] || '#888'}"></div>
+                            <span class="text-xs font-bold text-zinc-700 dark:text-zinc-300 truncate">${ex.name}</span>
+                        </div>
+                        <div class="flex flex-wrap gap-1 ml-2 justify-end">
+                            ${ex.sets.map(s => `<span class="bg-white dark:bg-zinc-700 px-1.5 py-0.5 rounded-md text-[9px] font-bold mono text-zinc-500 dark:text-zinc-400 whitespace-nowrap">${s.weight}×${s.reps}</span>`).join('')}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  CALENDAR RENDERER
+// ═══════════════════════════════════════════════════════════════
+
+let calMonth = new Date();
+
+function renderCalendar() {
+    const grid = $('#calendar-days');
+    const detail = $('#calendar-detail');
+    detail.innerHTML = ''; // Clear stale detail on re-render
+    const y = calMonth.getFullYear(), m = calMonth.getMonth();
+    $('#calendar-title').textContent = `${y}年 ${MONTH_NAMES[m]}`;
+
+    const first = new Date(y, m, 1).getDay();
+    const daysCount = new Date(y, m + 1, 0).getDate();
+    let html = '<div></div>'.repeat(first);
+
+    for (let d = 1; d <= daysCount; d++) {
+        const iso = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const dayLogs = Data.state.logs.filter(l => l.date === iso);
+        const hasLog = dayLogs.some(l => l.exercises && l.exercises.length > 0);
+
+        let mainGroup = '';
+        if (hasLog) {
+            const counts = {};
+            dayLogs.forEach(l => (l.exercises || []).forEach(ex => counts[ex.group] = (counts[ex.group] || 0) + 1));
+            const top = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+            mainGroup = top.length > 0 ? top[0][0] : '';
         }
 
-        window.loadSleepDataForDate = (date) => {
-            const log = appState.logs.find(l => l.date === date);
-            const sleep = log?.sleep || { start: '01:00', end: '09:05', dreams: 0, wakes: 0, tiredness: 'normal' };
-            const [sh, sm] = sleep.start.split(':');
-            const [eh, em] = sleep.end.split(':');
-            document.getElementById('sleep-tab-start-h').value = sh;
-            document.getElementById('sleep-tab-start-m').value = sm;
-            document.getElementById('sleep-tab-end-h').value = eh;
-            document.getElementById('sleep-tab-end-m').value = em;
-            document.getElementById('sleep-tab-dreams').value = sleep.dreams;
-            document.getElementById('sleep-tab-wakes').value = sleep.wakes;
-            document.getElementById('sleep-tab-tiredness').value = sleep.tiredness;
-        };
+        const isToday = iso === getToday();
+        html += `
+            <div class="flex flex-col items-center justify-start min-h-[48px] py-1 rounded-xl cursor-pointer transition-all ${hasLog ? 'bg-zinc-100 dark:bg-zinc-800/60' : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/30'} ${isToday ? 'ring-2 ring-orange-500/30' : ''}" data-cal-day="${iso}">
+                <span class="text-[11px] font-bold ${hasLog ? 'text-zinc-800 dark:text-zinc-200' : 'text-zinc-400 dark:text-zinc-600'} ${isToday ? 'text-orange-500 dark:text-orange-400' : ''}">${d}</span>
+                ${hasLog ? `<div class="mt-1 flex flex-col items-center gap-0.5"><div class="w-2 h-2 rounded-full" style="background:${GROUP_COLORS[mainGroup] || '#888'}"></div><span class="text-[7px] font-bold text-zinc-400 dark:text-zinc-600 mono">${calcVolume(dayLogs[0])}kg</span></div>` : ''}
+            </div>`;
+    }
+    grid.innerHTML = html;
+}
 
-        window.saveSleepFromTab = () => {
-            const date = document.getElementById('sleep-tab-date').value;
-            if (!date) return alert('请选择日期');
-            let log = appState.logs.find(l => l.date === date);
-            const sleepData = {
-                start: `${document.getElementById('sleep-tab-start-h').value}:${document.getElementById('sleep-tab-start-m').value}`,
-                end: `${document.getElementById('sleep-tab-end-h').value}:${document.getElementById('sleep-tab-end-m').value}`,
-                dreams: parseInt(document.getElementById('sleep-tab-dreams').value) || 0,
-                wakes: parseInt(document.getElementById('sleep-tab-wakes').value) || 0,
-                tiredness: document.getElementById('sleep-tab-tiredness').value
+// ═══════════════════════════════════════════════════════════════
+//  SLEEP TAB RENDERER
+// ═══════════════════════════════════════════════════════════════
+
+let sleepCalMonth = new Date();
+
+function renderSleepTab() {
+    const dateInput = $('#sleep-date');
+    if (!dateInput.value) {
+        dateInput.value = getToday();
+        loadSleepForDate(dateInput.value);
+    }
+    renderSleepCharts();
+    renderSleepCalendar();
+}
+
+function loadSleepForDate(date) {
+    const log = Data.state.logs.find(l => l.date === date);
+    const sleep = log?.sleep || { start: '01:00', end: '09:05', dreams: 0, wakes: 0, tiredness: 'normal' };
+    $('#sleep-start').value = sleep.start;
+    $('#sleep-end').value = sleep.end;
+    $('#sleep-dreams').value = sleep.dreams;
+    $('#sleep-wakes').value = sleep.wakes;
+    $('#sleep-tiredness').value = sleep.tiredness;
+}
+
+function saveSleepFromTab() {
+    const date = $('#sleep-date').value;
+    if (!date) { Toast.show('请选择日期', 'warning'); return; }
+
+    const sleepData = {
+        start: $('#sleep-start').value || '01:00',
+        end: $('#sleep-end').value || '09:05',
+        dreams: parseInt($('#sleep-dreams').value) || 0,
+        wakes: parseInt($('#sleep-wakes').value) || 0,
+        tiredness: $('#sleep-tiredness').value || 'normal'
+    };
+
+    let log = Data.state.logs.find(l => l.date === date);
+    if (log) {
+        log.sleep = sleepData;
+    } else {
+        Data.state.logs.push({
+            id: Date.now().toString(), date, exercises: [],
+            mood: '😊', weight: null, bodyFat: null, notes: '', sleep: sleepData
+        });
+    }
+    Data.saveLogs();
+    renderSleepCharts();
+    renderSleepCalendar();
+    Toast.show('睡眠记录已保存 🌙');
+}
+
+function renderSleepCharts() {
+    const logs = [...Data.state.logs].filter(l => l.sleep).sort((a, b) => new Date(a.date) - new Date(b.date));
+    const labels = logs.map(l => l.date.slice(5));
+    const zoom = Charts.zoomOpts();
+    const isDark = Theme.isDark;
+
+    Charts.create('sleep-chart', {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [{
+                data: logs.map(l => calcSleepDuration(l.sleep)),
+                borderColor: '#8b5cf6',
+                backgroundColor: isDark ? 'rgba(139,92,246,0.08)' : 'rgba(139,92,246,0.1)',
+                fill: true, tension: 0.4, pointRadius: 2, pointHoverRadius: 5, borderWidth: 2
+            }]
+        },
+        options: { plugins: { legend: { display: false }, zoom }, scales: { y: { beginAtZero: true } } }
+    });
+
+    const tirednessMap = { refreshed: 3, normal: 2, tired: 1 };
+    Charts.create('sleep-quality-chart', {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [{
+                data: logs.map(l => tirednessMap[l.sleep.tiredness] || 2),
+                borderColor: '#10b981',
+                backgroundColor: isDark ? 'rgba(16,185,129,0.08)' : 'rgba(16,185,129,0.1)',
+                fill: true, tension: 0.4, stepped: false, pointRadius: 2, pointHoverRadius: 5, borderWidth: 2
+            }]
+        },
+        options: {
+            plugins: { legend: { display: false }, zoom },
+            scales: { y: { min: 0.5, max: 3.5, ticks: { callback: v => v === 3 ? '精神' : v === 2 ? '正常' : v === 1 ? '疲惫' : '' } } }
+        }
+    });
+}
+
+function renderSleepCalendar() {
+    const grid = $('#sleep-calendar-days');
+    const y = sleepCalMonth.getFullYear(), m = sleepCalMonth.getMonth();
+    $('#sleep-cal-title').textContent = `${y}年 ${MONTH_NAMES[m]} 睡眠`;
+
+    const first = new Date(y, m, 1).getDay();
+    const daysCount = new Date(y, m + 1, 0).getDate();
+    const tirednessColors = { refreshed: 'bg-emerald-400', normal: 'bg-blue-400', tired: 'bg-amber-400' };
+    let html = '<div></div>'.repeat(first);
+
+    for (let d = 1; d <= daysCount; d++) {
+        const iso = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const log = Data.state.logs.find(l => l.date === iso);
+        const hasSleep = log?.sleep;
+        html += `
+            <div class="flex flex-col items-center justify-center min-h-[38px] rounded-lg cursor-pointer transition-all ${hasSleep ? 'bg-zinc-100 dark:bg-zinc-800/50' : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/30'}" data-sleep-day="${iso}">
+                <span class="text-[10px] font-bold ${hasSleep ? 'text-zinc-700 dark:text-zinc-300' : 'text-zinc-300 dark:text-zinc-700'}">${d}</span>
+                ${hasSleep ? `<div class="w-1.5 h-1.5 rounded-full mt-0.5 ${tirednessColors[log.sleep.tiredness] || 'bg-zinc-300'}"></div>` : ''}
+            </div>`;
+    }
+    grid.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  STATS RENDERER
+// ═══════════════════════════════════════════════════════════════
+
+function renderStats() {
+    const logs = [...Data.state.logs].sort((a, b) => new Date(a.date) - new Date(b.date));
+    const isDark = Theme.isDark;
+    updateChartDefaults();
+
+    // PRs
+    const prs = { s: 0, b: 0, d: 0 };
+    logs.forEach(l => (l.exercises || []).forEach(ex => {
+        const max = Math.max(...ex.sets.map(s => s.weight || 0));
+        if (ex.name.includes('深蹲')) prs.s = Math.max(prs.s, max);
+        if (ex.name.includes('卧推')) prs.b = Math.max(prs.b, max);
+        if (ex.name.includes('硬拉')) prs.d = Math.max(prs.d, max);
+    }));
+    $('#pr-squat').textContent = prs.s || '--';
+    $('#pr-bench').textContent = prs.b || '--';
+    $('#pr-deadlift').textContent = prs.d || '--';
+
+    const labels = logs.map(l => l.date.slice(5));
+    const zoom = Charts.zoomOpts();
+
+    // Volume chart
+    Charts.create('volume-chart', {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{
+                label: '容量',
+                data: logs.map(l => calcVolume(l)),
+                backgroundColor: isDark ? 'rgba(251,146,60,0.3)' : 'rgba(234,88,12,0.25)',
+                borderColor: isDark ? '#fb923c' : '#ea580c',
+                borderWidth: 1, borderRadius: 6
+            }]
+        },
+        options: { plugins: { legend: { display: false }, zoom }, scales: { y: { beginAtZero: true } } }
+    });
+
+    // SBD chart
+    Charts.create('sbd-chart', {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                { label: '深蹲', data: logs.map(l => { const e = (l.exercises||[]).find(e => e.name.includes('深蹲')); return e ? Math.max(...e.sets.map(s => s.weight)) : null; }), borderColor: '#ef4444', tension: 0.4, spanGaps: true, borderWidth: 2, pointRadius: 2 },
+                { label: '卧推', data: logs.map(l => { const e = (l.exercises||[]).find(e => e.name.includes('卧推')); return e ? Math.max(...e.sets.map(s => s.weight)) : null; }), borderColor: '#3b82f6', tension: 0.4, spanGaps: true, borderWidth: 2, pointRadius: 2 },
+                { label: '硬拉', data: logs.map(l => { const e = (l.exercises||[]).find(e => e.name.includes('硬拉')); return e ? Math.max(...e.sets.map(s => s.weight)) : null; }), borderColor: '#8b5cf6', tension: 0.4, spanGaps: true, borderWidth: 2, pointRadius: 2 }
+            ]
+        },
+        options: { plugins: { zoom } }
+    });
+
+    // Weight chart
+    Charts.create('weight-chart', {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [{
+                data: logs.map(l => l.weight), borderColor: '#f97316',
+                backgroundColor: isDark ? 'rgba(249,115,22,0.08)' : 'rgba(249,115,22,0.1)',
+                fill: true, tension: 0.4, pointRadius: 2, borderWidth: 2
+            }]
+        },
+        options: { plugins: { legend: { display: false }, zoom } }
+    });
+
+    // Body fat chart
+    Charts.create('fat-chart', {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [{
+                data: logs.map(l => l.bodyFat), borderColor: '#ec4899',
+                backgroundColor: isDark ? 'rgba(236,72,153,0.08)' : 'rgba(236,72,153,0.1)',
+                fill: true, tension: 0.4, pointRadius: 2, borderWidth: 2
+            }]
+        },
+        options: { plugins: { legend: { display: false }, zoom } }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  LIBRARY RENDERER
+// ═══════════════════════════════════════════════════════════════
+
+function renderLibrary() {
+    const list = $('#lib-list');
+    const grouped = {};
+    Data.state.library.forEach((item, idx) => {
+        if (!grouped[item.group]) grouped[item.group] = [];
+        grouped[item.group].push({ ...item, _idx: idx });
+    });
+
+    const order = ['胸部', '背部', '腿部', '肩部', '手臂', '核心', '有氧'];
+    list.innerHTML = order.map(group => {
+        const items = grouped[group] || [];
+        if (!items.length) return '';
+        return `
+            <div class="bg-zinc-50 dark:bg-zinc-800/50 px-4 py-2 text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">${group}</div>
+            ${items.map(item => `
+                <div class="flex items-center justify-between p-3.5 bg-white dark:bg-transparent hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors group">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-2 h-2 rounded-full" style="background:${GROUP_COLORS[item.group] || '#888'}"></div>
+                        <span class="text-sm font-bold text-zinc-700 dark:text-zinc-300">${item.name}</span>
+                    </div>
+                    <div class="flex items-center gap-1 opacity-50 group-hover:opacity-100 transition-opacity">
+                        <button data-lib-move="${item._idx}:-1" class="w-7 h-7 flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 rounded-lg text-zinc-400 text-xs">↑</button>
+                        <button data-lib-move="${item._idx}:1" class="w-7 h-7 flex items-center justify-center bg-zinc-100 dark:bg-zinc-800 rounded-lg text-zinc-400 text-xs">↓</button>
+                        <button data-lib-del="${item.id}" class="w-7 h-7 flex items-center justify-center text-zinc-300 hover:text-red-400 text-lg font-bold">×</button>
+                    </div>
+                </div>
+            `).join('')}`;
+    }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  WORKOUT EDITOR
+// ═══════════════════════════════════════════════════════════════
+
+const Editor = {
+    current: null,
+    isEditing: false,
+
+    open(id = null) {
+        const overlay = $('#editor-overlay');
+        overlay.classList.remove('hidden');
+        requestAnimationFrame(() => overlay.classList.add('open'));
+
+        const deleteBtn = $('#btn-delete-log');
+        if (id) {
+            const log = Data.state.logs.find(l => l.id === id);
+            this.current = JSON.parse(JSON.stringify(log));
+            this.isEditing = true;
+            deleteBtn.classList.remove('hidden');
+            $('#editor-title').textContent = '编辑记录';
+        } else {
+            const draft = Data.loadDraft();
+            this.current = draft || {
+                id: Date.now().toString(), date: getToday(), exercises: [],
+                mood: '😊', weight: null, bodyFat: null, notes: '',
+                sleep: { start: '01:00', end: '09:05', dreams: 0, wakes: 0, tiredness: 'normal' }
             };
-            if (log) {
-                log.sleep = sleepData;
-            } else {
-                appState.logs.push({
-                    id: Date.now().toString(),
-                    date: date,
-                    exercises: [],
-                    mood: '😊',
-                    weight: null,
-                    bodyFat: null,
-                    notes: '',
-                    sleep: sleepData
-                });
-            }
-            localStorage.setItem('fitlog_v2_data', JSON.stringify(appState.logs));
-            renderSleepTab();
-            alert('睡眠记录已保存 🌙');
-        };
-
-        function init() {
-            document.getElementById('header-banner').textContent = appState.banner;
-            document.getElementById('settings-banner').value = appState.banner;
-            renderHome();
+            this.isEditing = false;
+            deleteBtn.classList.add('hidden');
+            $('#editor-title').textContent = '记录训练';
         }
 
-        // 数据备份功能 (JSON)
-        window.exportJSONBackup = () => {
-            const data = {
-                version: "2.1",
-                logs: appState.logs,
-                library: appState.library,
-                banner: appState.banner,
-                timestamp: Date.now()
-            };
-            const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = `FitLog_Backup_${getLocalToday()}.json`;
-            a.click();
-        };
-
-        window.importJSONBackup = (input) => {
-            const file = input.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    if (!data.logs || !Array.isArray(data.logs)) throw new Error("无效的备份文件");
-                    
-                    if (confirm("导入备份将合并或覆盖当前记录。确定继续吗？")) {
-                        appState.logs = data.logs;
-                        appState.library = data.library || appState.library;
-                        appState.banner = data.banner || appState.banner;
-                        
-                        localStorage.setItem('fitlog_v2_data', JSON.stringify(appState.logs));
-                        localStorage.setItem('fitlog_lib_v2', JSON.stringify(appState.library));
-                        localStorage.setItem('fitlog_banner', appState.banner);
-                        
-                        alert("数据恢复成功！正在重新加载...");
-                        location.reload();
-                    }
-                } catch (err) {
-                    alert("导入失败: " + err.message);
-                }
-            };
-            reader.readAsText(file);
-        };
-
-        function handleEditorInput() { syncCurrentInputsToState(); saveDraft(); }
-        function saveDraft() { if (currentEditLog) localStorage.setItem('fitlog_editor_draft', JSON.stringify(currentEditLog)); }
-        function clearDraft() { localStorage.removeItem('fitlog_editor_draft'); }
-
-        function addLibraryItem() {
-            const name = document.getElementById('lib-new-name').value.trim();
-            const group = document.getElementById('lib-new-group').value;
-            if(!name) return;
-            
-            // Find the last index of the same group to insert after it
-            let lastIndex = -1;
-            for (let i = 0; i < appState.library.length; i++) {
-                if (appState.library[i].group === group) lastIndex = i;
-            }
-            
-            const newItem = { id: Date.now().toString(), name, group };
-            if (lastIndex === -1) {
-                appState.library.push(newItem);
-            } else {
-                appState.library.splice(lastIndex + 1, 0, newItem);
-            }
-            
-            localStorage.setItem('fitlog_lib_v2', JSON.stringify(appState.library));
-            renderLibrary();
-            document.getElementById('lib-new-name').value = '';
+        if (!this.current.sleep) {
+            this.current.sleep = { start: '01:00', end: '09:05', dreams: 0, wakes: 0, tiredness: 'normal' };
         }
 
-        function renderLibrary() {
-            const list = document.getElementById('lib-list');
-            const grouped = {};
-            appState.library.forEach((item, index) => {
-                if (!grouped[item.group]) grouped[item.group] = [];
-                grouped[item.group].push({ ...item, originalIndex: index });
-            });
+        $('#edit-date').value = this.current.date;
+        $('#edit-mood').value = this.current.mood;
+        $('#edit-weight').value = this.current.weight || '';
+        $('#edit-fat').value = this.current.bodyFat || '';
+        $('#edit-notes').value = this.current.notes || '';
 
-            const groupsOrder = ['胸部', '背部', '腿部', '肩部', '手臂', '核心', '有氧'];
-            
-            list.innerHTML = groupsOrder.map(group => {
-                const items = grouped[group] || [];
-                if (items.length === 0) return '';
-                return `
-                    <div class="bg-slate-50/50 px-4 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">${group}</div>
-                    ${items.map((item, idx) => `
-                        <div class="flex items-center justify-between p-4 bg-white hover:bg-slate-50 transition-colors group">
-                            <div class="flex items-center gap-3">
-                                <div class="w-2.5 h-2.5 rounded-full" style="background:${COLORS[item.group] || '#ddd'}"></div>
-                                <div class="text-[14px] font-black text-slate-800">${item.name}</div>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <div class="flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onclick="moveLibItem(${item.originalIndex}, -1)" class="w-6 h-6 flex items-center justify-center bg-slate-50 rounded text-slate-400 hover:text-blue-600">↑</button>
-                                    <button onclick="moveLibItem(${item.originalIndex}, 1)" class="w-6 h-6 flex items-center justify-center bg-slate-50 rounded text-slate-400 hover:text-blue-600">↓</button>
-                                </div>
-                                <button onclick="deleteLibItem('${item.id}')" class="text-slate-200 hover:text-red-400 text-xl font-bold px-2">×</button>
-                            </div>
+        this.renderExercises();
+        this.renderLibGrid();
+    },
+
+    close() {
+        const overlay = $('#editor-overlay');
+        overlay.classList.remove('open');
+        setTimeout(() => overlay.classList.add('hidden'), 450);
+        Timer.hide();
+    },
+
+    syncInputs() {
+        if (!this.current) return;
+        this.current.date = $('#edit-date').value;
+        this.current.mood = $('#edit-mood').value;
+        this.current.weight = parseFloat($('#edit-weight').value) || null;
+        this.current.bodyFat = parseFloat($('#edit-fat').value) || null;
+        this.current.notes = $('#edit-notes').value;
+    },
+
+    save() {
+        this.syncInputs();
+        if (!this.current.exercises.length) {
+            Toast.show('请至少添加一个动作', 'warning');
+            return;
+        }
+        // Validate sets
+        this.current.exercises.forEach(ex => {
+            ex.sets = ex.sets.filter(s => s.weight >= 0 && s.reps >= 0);
+            if (!ex.sets.length) ex.sets = [{ weight: 0, reps: 0 }];
+        });
+
+        const idx = Data.state.logs.findIndex(l => l.id === this.current.id);
+        if (idx > -1) Data.state.logs[idx] = this.current;
+        else Data.state.logs.push(this.current);
+
+        Data.saveLogs();
+        Data.clearDraft();
+        Toast.show('训练记录已保存 💪');
+        renderDashboard();
+        // Refresh whichever view is active
+        if (Router.current === 'calendar') renderCalendar();
+        if (Router.current === 'sleep') { renderSleepCharts(); renderSleepCalendar(); }
+        if (Router.current === 'stats') renderStats();
+        this.close();
+    },
+
+    saveDraft: debounce(function() {
+        if (Editor.current) Data.saveDraft(Editor.current);
+    }, 500),
+
+    handleInput() {
+        this.syncInputs();
+        this.saveDraft();
+    },
+
+    addExercise(libId) {
+        this.syncInputs();
+        const item = Data.state.library.find(i => i.id === libId);
+        if (!item) return;
+        this.current.exercises.push({
+            id: item.id, name: item.name, group: item.group,
+            sets: [{ weight: 0, reps: 0 }]
+        });
+        this.renderExercises();
+        this.saveDraft();
+    },
+
+    removeExercise(idx) {
+        this.syncInputs();
+        this.current.exercises.splice(idx, 1);
+        this.renderExercises();
+        this.saveDraft();
+    },
+
+    addSet(exIdx) {
+        this.syncInputs();
+        const ex = this.current.exercises[exIdx];
+        const last = ex.sets[ex.sets.length - 1];
+        ex.sets.push({ weight: last ? last.weight : 0, reps: last ? last.reps : 0 });
+        this.renderExercises();
+        this.saveDraft();
+    },
+
+    removeSet(exIdx, sIdx) {
+        this.syncInputs();
+        if (this.current.exercises[exIdx].sets.length > 1) {
+            this.current.exercises[exIdx].sets.splice(sIdx, 1);
+            this.renderExercises();
+            this.saveDraft();
+        }
+    },
+
+    updateSet(exIdx, sIdx, field, val) {
+        this.current.exercises[exIdx].sets[sIdx][field] = Math.max(0, parseFloat(val) || 0);
+        this.saveDraft();
+    },
+
+    deleteLog() {
+        if (!confirm('确定删除此记录？')) return;
+        Data.state.logs = Data.state.logs.filter(l => l.id !== this.current.id);
+        Data.saveLogs();
+        Data.clearDraft();
+        Toast.show('记录已删除', 'info');
+        renderDashboard();
+        // Also refresh calendar/sleep views so deleted entries disappear
+        if (Router.current === 'calendar') renderCalendar();
+        if (Router.current === 'sleep') { renderSleepCharts(); renderSleepCalendar(); }
+        this.close();
+    },
+
+    renderExercises() {
+        const list = $('#edit-exercises');
+        list.innerHTML = this.current.exercises.map((ex, exIdx) => `
+            <div class="glass-card p-4 border-l-4 space-y-3" style="border-left-color:${GROUP_COLORS[ex.group] || '#888'}">
+                <div class="flex justify-between items-center">
+                    <span class="font-display font-bold text-sm text-zinc-800 dark:text-zinc-100">${ex.name}</span>
+                    <button data-editor-rmex="${exIdx}" class="text-red-400 font-bold text-[10px] uppercase px-2 py-1">移除</button>
+                </div>
+                <div class="space-y-1.5">
+                    ${ex.sets.map((s, sIdx) => `
+                        <div class="flex items-center gap-1.5">
+                            <span class="bg-zinc-100 dark:bg-zinc-800 text-zinc-400 font-bold h-9 w-7 shrink-0 flex items-center justify-center rounded-lg mono text-[11px]">${sIdx + 1}</span>
+                            <input type="number" step="0.5" value="${s.weight}" class="flex-1 min-w-0 bg-zinc-100 dark:bg-zinc-800 h-9 text-center rounded-lg font-bold mono text-xs border-0 text-zinc-800 dark:text-zinc-200" data-editor-set="${exIdx}:${sIdx}:weight" min="0" placeholder="kg">
+                            <input type="number" step="1" value="${s.reps}" class="flex-1 min-w-0 bg-zinc-100 dark:bg-zinc-800 h-9 text-center rounded-lg font-bold mono text-xs border-0 text-zinc-800 dark:text-zinc-200" data-editor-set="${exIdx}:${sIdx}:reps" min="0" placeholder="次">
+                            <button data-editor-rmset="${exIdx}:${sIdx}" class="text-zinc-300 dark:text-zinc-600 text-lg font-bold w-7 shrink-0 flex items-center justify-center h-9">&times;</button>
                         </div>
                     `).join('')}
-                `;
-            }).join('');
-        }
-
-        window.moveLibItem = (index, direction) => {
-            const newIndex = index + direction;
-            if (newIndex < 0 || newIndex >= appState.library.length) return;
-            
-            // Only allow moving within the same group for better UX as requested
-            if (appState.library[index].group !== appState.library[newIndex].group) {
-                // If moving across groups, we still allow it but it might be confusing
-                // The user said "加到对应部位的动作最后", implying group-based order
-            }
-            
-            const temp = appState.library[index];
-            appState.library[index] = appState.library[newIndex];
-            appState.library[newIndex] = temp;
-            
-            localStorage.setItem('fitlog_lib_v2', JSON.stringify(appState.library));
-            renderLibrary();
-        };
-
-        window.deleteLibItem = (id) => {
-            if(!confirm('确定移除此动作？')) return;
-            appState.library = appState.library.filter(i => i.id !== id);
-            localStorage.setItem('fitlog_lib_v2', JSON.stringify(appState.library));
-            renderLibrary();
-        };
-
-        function syncCurrentInputsToState() {
-            if (!currentEditLog) return;
-            currentEditLog.date = document.getElementById('edit-date').value;
-            currentEditLog.mood = document.getElementById('edit-mood').value;
-            currentEditLog.weight = parseFloat(document.getElementById('edit-weight').value) || null;
-            currentEditLog.bodyFat = parseFloat(document.getElementById('edit-fat').value) || null;
-            currentEditLog.notes = document.getElementById('edit-notes').value;
-        }
-
-        window.openEditor = (id = null) => {
-            const overlay = document.getElementById('editor-overlay');
-            overlay.classList.remove('hidden');
-            setTimeout(() => overlay.style.transform = 'translateY(0)', 10);
-            const deleteBtn = document.getElementById('delete-log-btn');
-            if (id) {
-                currentEditLog = JSON.parse(JSON.stringify(appState.logs.find(l => l.id === id)));
-                deleteBtn.classList.remove('hidden');
-            } else {
-                const draft = localStorage.getItem('fitlog_editor_draft');
-                currentEditLog = draft ? JSON.parse(draft) : { 
-                    id: Date.now().toString(), 
-                    date: getLocalToday(), 
-                    exercises: [], 
-                    mood: '😊', 
-                    weight: null, 
-                    bodyFat: null, 
-                    notes: '',
-                    sleep: { start: '01:00', end: '09:05', dreams: 0, wakes: 0, tiredness: 'normal' }
-                };
-                deleteBtn.classList.add('hidden');
-            }
-            if (!currentEditLog.sleep) {
-                currentEditLog.sleep = { start: '01:00', end: '09:05', dreams: 0, wakes: 0, tiredness: 'normal' };
-            }
-            document.getElementById('edit-date').value = currentEditLog.date;
-            document.getElementById('edit-mood').value = currentEditLog.mood;
-            document.getElementById('edit-weight').value = currentEditLog.weight || '';
-            document.getElementById('edit-fat').value = currentEditLog.bodyFat || '';
-            document.getElementById('edit-notes').value = currentEditLog.notes;
-            
-            syncEditorUI();
-        };
-
-        window.closeEditor = () => {
-            const overlay = document.getElementById('editor-overlay');
-            overlay.style.transform = 'translateY(100%)';
-            setTimeout(() => overlay.classList.add('hidden'), 500);
-        };
-
-        function syncEditorUI() {
-            const list = document.getElementById('edit-exercises');
-            list.innerHTML = currentEditLog.exercises.map((ex, exIdx) => `
-                <div class="bg-white rounded-[1.5rem] p-5 border-l-[8px] shadow-sm relative" style="border-color:${COLORS[ex.group] || '#ddd'}">
-                    <div class="flex justify-between items-center mb-4">
-                        <span class="font-black text-[14px] text-slate-800">${ex.name}</span>
-                        <button onclick="removeEx(${exIdx})" class="text-red-400 font-black text-[11px] uppercase">移除</button>
-                    </div>
-                    <div class="space-y-2">
-                        ${ex.sets.map((s, sIdx) => `
-                            <div class="grid grid-cols-4 gap-2 items-center">
-                                <span class="bg-slate-50 text-slate-500 font-black h-10 flex items-center justify-center rounded-xl mono text-[12px]">${sIdx+1}</span>
-                                <input type="number" step="0.5" value="${s.weight}" class="bg-slate-50 h-10 text-center rounded-xl font-black mono outline-none text-[13px]" oninput="updateSetData(${exIdx},${sIdx},'weight',this.value)">
-                                <input type="number" step="1" value="${s.reps}" class="bg-slate-50 h-10 text-center rounded-xl font-black mono outline-none text-[13px]" oninput="updateSetData(${exIdx},${sIdx},'reps',this.value)">
-                                <button onclick="removeSet(${exIdx},${sIdx})" class="text-slate-200 text-2xl font-bold">×</button>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <button onclick="addSet(${exIdx})" class="w-full mt-4 py-2.5 bg-slate-50 text-[11px] font-black rounded-xl border border-dashed border-slate-200 text-slate-400">+ 新组次</button>
                 </div>
-            `).join('');
-            const grid = document.getElementById('edit-lib-grid');
-            grid.innerHTML = appState.library.map(item => `<button onclick="quickAddEx('${item.id}')" class="p-3 bg-white rounded-xl text-[12px] font-black border border-slate-100 shadow-sm text-left active:scale-95 transition-all"><div class="text-[9px] opacity-30 uppercase mb-0.5" style="color:${COLORS[item.group]}">${item.group}</div><div class="truncate text-slate-700">${item.name}</div></button>`).join('');
+                <button data-editor-addset="${exIdx}" class="w-full py-2 bg-zinc-50 dark:bg-zinc-800/60 text-[10px] font-bold rounded-lg border border-dashed border-zinc-200 dark:border-zinc-700 text-zinc-400 active:scale-[0.98] transition-transform">+ 新组次</button>
+            </div>
+        `).join('');
+        // Ensure scroll container recalculates after DOM change
+        const scrollEl = $('#editor-scroll');
+        if (scrollEl) { scrollEl.style.overflow = 'hidden'; requestAnimationFrame(() => scrollEl.style.overflow = 'auto'); }
+    },
+
+    renderLibGrid(query = '') {
+        const grid = $('#edit-lib-grid');
+        const q = query.toLowerCase();
+        const items = q
+            ? Data.state.library.filter(i => i.name.toLowerCase().includes(q) || i.group.includes(q))
+            : Data.state.library;
+
+        grid.innerHTML = items.map(item => `
+            <button data-editor-addex="${item.id}" class="p-2.5 glass-card text-left active:scale-95 transition-transform">
+                <div class="text-[8px] font-bold uppercase tracking-wider mb-0.5" style="color:${GROUP_COLORS[item.group]}">${item.group}</div>
+                <div class="text-[11px] font-bold text-zinc-700 dark:text-zinc-300 truncate">${item.name}</div>
+            </button>
+        `).join('');
+    }
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  REST TIMER
+// ═══════════════════════════════════════════════════════════════
+
+const Timer = {
+    total: 90,
+    remaining: 90,
+    interval: null,
+    running: false,
+
+    show() {
+        $('#timer-widget').classList.remove('hidden');
+        this.render();
+    },
+
+    hide() {
+        this.stop();
+        $('#timer-widget').classList.add('hidden');
+    },
+
+    toggle() {
+        if (this.running) this.pause();
+        else this.start();
+    },
+
+    set(sec) {
+        this.stop();
+        this.total = sec;
+        this.remaining = sec;
+        this.render();
+    },
+
+    start() {
+        if (this.remaining <= 0) this.remaining = this.total;
+        this.running = true;
+        this.interval = setInterval(() => {
+            this.remaining--;
+            this.render();
+            if (this.remaining <= 0) {
+                this.stop();
+                Toast.show('休息结束！继续训练 💪', 'info');
+                if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+            }
+        }, 1000);
+        this.render();
+    },
+
+    pause() {
+        clearInterval(this.interval);
+        this.running = false;
+        this.render();
+    },
+
+    stop() {
+        clearInterval(this.interval);
+        this.running = false;
+        this.interval = null;
+    },
+
+    render() {
+        const display = $('#timer-display');
+        const ring = $('#timer-ring');
+        const btn = $('#btn-timer-action');
+        if (!display) return;
+
+        const m = Math.floor(this.remaining / 60);
+        const s = this.remaining % 60;
+        display.textContent = `${m}:${String(s).padStart(2, '0')}`;
+
+        const circumference = 2 * Math.PI * 44; // ~276.46
+        const progress = this.total > 0 ? (this.total - this.remaining) / this.total : 0;
+        ring.style.strokeDashoffset = (circumference * progress).toString();
+
+        btn.textContent = this.running ? '暂停' : (this.remaining < this.total && this.remaining > 0 ? '继续' : '开始');
+    }
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  SETTINGS & EXPORTS
+// ═══════════════════════════════════════════════════════════════
+
+function exportJSON() {
+    const data = {
+        version: '3.0',
+        logs: Data.state.logs,
+        library: Data.state.library,
+        banner: Data.state.banner,
+        timestamp: Date.now()
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `FitLog_Backup_${getToday()}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    Toast.show('备份已导出 ✅');
+}
+
+function importJSON(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const data = JSON.parse(e.target.result);
+            if (!data.logs || !Array.isArray(data.logs)) throw new Error('无效的备份文件');
+            if (!confirm('导入备份将覆盖当前记录。确定继续吗？')) return;
+
+            Data.state.logs = data.logs;
+            Data.state.library = data.library || Data.state.library;
+            Data.state.banner = data.banner || Data.state.banner;
+
+            Data.saveLogs();
+            Data.saveLib();
+            Data.saveBanner();
+
+            Toast.show('数据恢复成功！正在重新加载...', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } catch (err) {
+            Toast.show('导入失败: ' + err.message, 'error');
         }
+    };
+    reader.readAsText(file);
+    input.value = '';
+}
 
-        window.updateSetData = (exIdx, sIdx, field, val) => { currentEditLog.exercises[exIdx].sets[sIdx][field] = parseFloat(val) || 0; saveDraft(); };
-        window.addSet = (idx) => { syncCurrentInputsToState(); const ex = currentEditLog.exercises[idx]; const last = ex.sets[ex.sets.length - 1]; ex.sets.push({ weight: last ? last.weight : 0, reps: last ? last.reps : 0 }); syncEditorUI(); saveDraft(); };
-        window.removeSet = (exIdx, sIdx) => { syncCurrentInputsToState(); if(currentEditLog.exercises[exIdx].sets.length > 1) { currentEditLog.exercises[exIdx].sets.splice(sIdx, 1); syncEditorUI(); saveDraft(); } };
-        window.removeEx = (idx) => { syncCurrentInputsToState(); currentEditLog.exercises.splice(idx, 1); syncEditorUI(); saveDraft(); };
-        window.quickAddEx = (libId) => { syncCurrentInputsToState(); const item = appState.library.find(i => i.id === libId); currentEditLog.exercises.push({ ...item, sets: [{ weight: 0, reps: 0 }] }); syncEditorUI(); saveDraft(); };
+function exportMarkdown() {
+    let md = '# FitLog 训练日志导出\n\n';
+    [...Data.state.logs].sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(l => {
+        md += `## ${l.date} ${l.mood || ''}\n- 总容量: ${calcVolume(l)}kg\n- 体重: ${l.weight || '--'}kg / 体脂: ${l.bodyFat || '--'}%\n`;
+        (l.exercises || []).forEach(ex => {
+            md += `### ${ex.name} (${ex.group})\n`;
+            ex.sets.forEach((s, i) => md += `- 组${i + 1}: ${s.weight}kg x ${s.reps}次\n`);
+        });
+        if (l.notes) md += `\n> 📝 ${l.notes}\n`;
+        md += '\n---\n\n';
+    });
+    const blob = new Blob([md], { type: 'text/markdown' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `FitLog_Export_${getToday()}.md`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    Toast.show('Markdown 已导出 📄');
+}
 
-        window.saveWorkout = () => {
-            syncCurrentInputsToState();
-            if(!currentEditLog.exercises.length) return alert('请至少记录一个动作');
-            const idx = appState.logs.findIndex(l => l.id === currentEditLog.id);
-            if(idx > -1) appState.logs[idx] = currentEditLog; else appState.logs.push(currentEditLog);
-            localStorage.setItem('fitlog_v2_data', JSON.stringify(appState.logs));
-            clearDraft(); renderHome(); closeEditor();
-        };
+// ═══════════════════════════════════════════════════════════════
+//  EVENT DELEGATION & BINDINGS
+// ═══════════════════════════════════════════════════════════════
 
-        window.confirmDeleteCurrentLog = () => {
-            if(!confirm('确定删除此记录？')) return;
-            appState.logs = appState.logs.filter(l => l.id !== currentEditLog.id);
-            localStorage.setItem('fitlog_v2_data', JSON.stringify(appState.logs));
-            clearDraft(); renderHome(); closeEditor();
-        };
+function initEvents() {
+    // Nav tabs
+    $$('[data-nav]').forEach(btn => {
+        btn.addEventListener('click', () => Router.switchTo(btn.dataset.nav));
+    });
 
-        function calculateLogVolume(log) { return log.exercises.reduce((acc, ex) => acc + ex.sets.reduce((sAcc, s) => sAcc + (s.weight * s.reps), 0), 0); }
+    // Dashboard - new workout
+    $('#btn-new-workout').addEventListener('click', () => Editor.open());
 
-        function renderHome() {
-            const list = document.getElementById('log-list');
-            const sorted = [...appState.logs].sort((a,b) => new Date(b.date) - new Date(a.date));
-            const workoutLogs = sorted.filter(l => l.exercises && l.exercises.length > 0);
-            
-            document.getElementById('stat-total').textContent = workoutLogs.length;
-            const now = new Date();
-            document.getElementById('stat-month').textContent = workoutLogs.filter(l => {
-                const d = new Date(l.date.replace(/-/g, '/'));
-                return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-            }).length;
-            
-            if(!workoutLogs.length) { list.innerHTML = '<div class="py-20 text-center text-slate-300 font-bold italic">没有训练记录</div>'; return; }
-            list.innerHTML = workoutLogs.map(log => `
-                <div class="bg-white rounded-[1.5rem] p-6 card-shadow border border-slate-50 space-y-4">
-                    <div class="flex justify-between items-start">
-                        <div class="flex items-center gap-4"><span class="text-4xl leading-none">${log.mood || '😊'}</span><div><h3 class="font-black text-[14px] text-slate-800">${log.date}</h3><p class="text-[10px] font-black text-slate-300 tracking-widest mt-0.5 uppercase">容量: ${calculateLogVolume(log)}kg | ${log.weight || '--'}kg ${log.sleep ? `| 💤 ${calculateSleepDuration(log.sleep)}h` : ''}</p></div></div>
-                        <button onclick="openEditor('${log.id}')" class="px-4 py-1.5 text-blue-600 font-black text-[11px] bg-blue-50 rounded-full">编辑</button>
+    // Dashboard - edit log (event delegation)
+    $('#log-list').addEventListener('click', (e) => {
+        const el = e.target.closest('[data-edit-log]');
+        if (el) Editor.open(el.dataset.editLog);
+    });
+
+    // Calendar navigation
+    $('#cal-prev').addEventListener('click', () => { calMonth.setMonth(calMonth.getMonth() - 1); renderCalendar(); });
+    $('#cal-next').addEventListener('click', () => { calMonth.setMonth(calMonth.getMonth() + 1); renderCalendar(); });
+
+    // Calendar day click
+    $('#calendar-days').addEventListener('click', (e) => {
+        const el = e.target.closest('[data-cal-day]');
+        if (!el) return;
+        const iso = el.dataset.calDay;
+        const dayLogs = Data.state.logs.filter(l => l.date === iso);
+        const detail = $('#calendar-detail');
+        if (dayLogs.some(l => l.exercises && l.exercises.length)) {
+            const mainGroups = {};
+            dayLogs.forEach(l => (l.exercises||[]).forEach(ex => mainGroups[ex.group] = (mainGroups[ex.group]||0)+1));
+            const topGroup = Object.entries(mainGroups).sort((a,b) => b[1]-a[1])[0]?.[0] || '';
+            detail.innerHTML = dayLogs.filter(l => l.exercises?.length).map(log => `
+                <div class="glass-card p-4 mt-3 flex justify-between items-center card-press" data-edit-log="${log.id}">
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">${log.mood || '😊'}</span>
+                        <div>
+                            <div class="font-display font-bold text-sm text-zinc-800 dark:text-zinc-100">${log.date}</div>
+                            <div class="text-[10px] font-bold text-zinc-400 mt-0.5">主练: ${topGroup} · 容量 ${calcVolume(log)}kg</div>
+                        </div>
                     </div>
-                    ${log.notes ? `<div class="bg-slate-50/50 p-3 rounded-xl border-l-4 border-slate-200"><p class="text-[11px] text-slate-500 font-medium leading-relaxed italic">"${log.notes}"</p></div>` : ''}
-                    <div class="space-y-2">
-                        ${log.exercises.map(ex => `
-                            <div class="bg-slate-50 p-3 rounded-xl flex items-center justify-between">
-                                <div class="flex-1 flex flex-col gap-1"><div class="flex items-center justify-between"><div class="text-[13px] font-black text-slate-800">${ex.name}</div><div class="flex flex-wrap gap-1">${ex.sets.map(s => `<span class="bg-white px-1.5 py-0.5 rounded-lg border border-slate-200 text-[10px] font-black mono text-slate-500">${s.weight}×${s.reps}</span>`).join('')}</div></div></div>
-                                <span class="text-[9px] font-black px-1.5 py-0.5 rounded-full text-white shrink-0 ml-3" style="background:${COLORS[ex.group] || '#ddd'}">${ex.group}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `).join('');
+                    <button class="bg-orange-50 dark:bg-orange-500/10 px-3 py-1.5 rounded-lg text-orange-500 font-bold text-[10px]" data-edit-log="${log.id}">详情</button>
+                </div>`).join('');
+        } else {
+            detail.innerHTML = '<div class="py-8 text-center text-zinc-300 dark:text-zinc-700 text-xs italic mt-3">这天没有训练记录 💤</div>';
         }
+    });
 
-        window.switchTab = (id) => {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.getElementById('tab-'+id).classList.add('active');
-            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active-nav'));
-            document.querySelector(`[data-tab="${id}"]`).classList.add('active-nav');
-            if(id === 'calendar') renderCalendar();
-            if(id === 'stats') renderStats();
-            if(id === 'library') renderLibrary();
-            if(id === 'sleep') renderSleepTab();
-        };
+    // Calendar detail click
+    $('#calendar-detail').addEventListener('click', (e) => {
+        const el = e.target.closest('[data-edit-log]');
+        if (el) Editor.open(el.dataset.editLog);
+    });
 
-        function renderSleepTab() {
-            const dateInput = document.getElementById('sleep-tab-date');
-            if (!dateInput.value) {
-                dateInput.value = getLocalToday();
-                loadSleepDataForDate(dateInput.value);
+    // Sleep tab
+    $('#sleep-date').addEventListener('change', (e) => loadSleepForDate(e.target.value));
+    $('#btn-save-sleep').addEventListener('click', saveSleepFromTab);
+    $('#sleepcal-prev').addEventListener('click', () => { sleepCalMonth.setMonth(sleepCalMonth.getMonth() - 1); renderSleepCalendar(); });
+    $('#sleepcal-next').addEventListener('click', () => { sleepCalMonth.setMonth(sleepCalMonth.getMonth() + 1); renderSleepCalendar(); });
+
+    // Sleep calendar day click
+    $('#sleep-calendar-days').addEventListener('click', (e) => {
+        const el = e.target.closest('[data-sleep-day]');
+        if (el) {
+            $('#sleep-date').value = el.dataset.sleepDay;
+            loadSleepForDate(el.dataset.sleepDay);
+        }
+    });
+
+    // Library
+    $('#btn-add-lib').addEventListener('click', () => {
+        const name = $('#lib-new-name').value.trim();
+        const group = $('#lib-new-group').value;
+        if (!name) { Toast.show('请输入动作名称', 'warning'); return; }
+        let lastIdx = -1;
+        Data.state.library.forEach((item, i) => { if (item.group === group) lastIdx = i; });
+        const newItem = { id: Date.now().toString(), name, group };
+        if (lastIdx === -1) Data.state.library.push(newItem);
+        else Data.state.library.splice(lastIdx + 1, 0, newItem);
+        Data.saveLib();
+        renderLibrary();
+        $('#lib-new-name').value = '';
+        Toast.show(`已添加: ${name}`, 'success');
+    });
+
+    // Library delegation
+    $('#lib-list').addEventListener('click', (e) => {
+        const moveBtn = e.target.closest('[data-lib-move]');
+        if (moveBtn) {
+            const [idx, dir] = moveBtn.dataset.libMove.split(':').map(Number);
+            const newIdx = idx + dir;
+            if (newIdx >= 0 && newIdx < Data.state.library.length) {
+                [Data.state.library[idx], Data.state.library[newIdx]] = [Data.state.library[newIdx], Data.state.library[idx]];
+                Data.saveLib();
+                renderLibrary();
             }
-            renderSleepStats();
-            renderSleepCalendar();
+            return;
         }
-
-        function renderSleepStats() {
-            const logs = [...appState.logs].filter(l => l.sleep).sort((a,b) => new Date(a.date) - new Date(b.date));
-            const labels = logs.map(l => l.date.slice(5));
-            const zoomOptions = {
-                pan: { enabled: true, mode: 'x' },
-                zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' }
-            };
-
-            if(charts.sleep) charts.sleep.destroy();
-            charts.sleep = new Chart(document.getElementById('sleep-chart'), { 
-                type: 'line', 
-                data: { 
-                    labels, 
-                    datasets: [{ 
-                        data: logs.map(l => calculateSleepDuration(l.sleep)), 
-                        borderColor: '#8b5cf6', 
-                        backgroundColor: 'rgba(139, 92, 246, 0.1)', 
-                        fill: true, 
-                        tension: 0.4 
-                    }] 
-                }, 
-                options: { plugins: { legend: { display: false }, zoom: zoomOptions }, scales: { y: { beginAtZero: true } } } 
-            });
-
-            const tirednessMap = { refreshed: 3, normal: 2, tired: 1 };
-            if(charts.sleepQuality) charts.sleepQuality.destroy();
-            charts.sleepQuality = new Chart(document.getElementById('sleep-quality-chart'), {
-                type: 'line',
-                data: {
-                    labels,
-                    datasets: [{
-                        label: '体感质量',
-                        data: logs.map(l => tirednessMap[l.sleep.tiredness] || 2),
-                        borderColor: '#10b981',
-                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                        fill: true,
-                        tension: 0.4,
-                        stepped: false
-                    }]
-                },
-                options: { 
-                    plugins: { legend: { display: false }, zoom: zoomOptions }, 
-                    scales: { 
-                        y: { 
-                            min: 0.5, 
-                            max: 3.5, 
-                            ticks: { 
-                                callback: function(value) {
-                                    if (value === 3) return '精神';
-                                    if (value === 2) return '正常';
-                                    if (value === 1) return '疲惫';
-                                    return '';
-                                }
-                            } 
-                        } 
-                    } 
-                }
-            });
+        const delBtn = e.target.closest('[data-lib-del]');
+        if (delBtn) {
+            if (!confirm('确定移除此动作？')) return;
+            Data.state.library = Data.state.library.filter(i => i.id !== delBtn.dataset.libDel);
+            Data.saveLib();
+            renderLibrary();
+            Toast.show('动作已移除', 'info');
         }
+    });
 
-        function renderSleepCalendar() {
-            const grid = document.getElementById('sleep-calendar-days'); grid.innerHTML = '';
-            const y = currentSleepMonth.getFullYear(), m = currentSleepMonth.getMonth();
-            const names = ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"];
-            document.getElementById('sleep-calendar-title').innerHTML = `${y}年 ${names[m]}`;
-            const first = new Date(y, m, 1).getDay();
-            const daysCount = new Date(y, m+1, 0).getDate();
-            for(let i=0; i<first; i++) grid.appendChild(document.createElement('div'));
-            
-            const tirednessColors = { refreshed: 'bg-emerald-400', normal: 'bg-blue-400', tired: 'bg-amber-400' };
+    // Settings
+    $('#btn-theme-toggle').addEventListener('click', () => Theme.toggle());
+    $('#btn-save-banner').addEventListener('click', () => {
+        Data.state.banner = $('#settings-banner').value;
+        Data.saveBanner();
+        $('#header-banner').textContent = Data.state.banner;
+        Toast.show('标语已更新 ✨');
+    });
+    $('#btn-export-json').addEventListener('click', exportJSON);
+    $('#btn-import-trigger').addEventListener('click', () => $('#import-file').click());
+    $('#import-file').addEventListener('change', (e) => importJSON(e.target));
+    $('#btn-export-md').addEventListener('click', exportMarkdown);
+    $('#btn-clear-data').addEventListener('click', () => {
+        if (!confirm('⚠️ 确定要清空所有数据吗？此操作无法撤销。')) return;
+        localStorage.clear();
+        Toast.show('数据已清空，正在重新加载...');
+        setTimeout(() => location.reload(), 1000);
+    });
 
-            for(let d=1; d<=daysCount; d++) {
-                const iso = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-                const log = appState.logs.find(l => l.date === iso);
-                const hasSleep = log && log.sleep;
-                
-                const dayDiv = document.createElement('div');
-                dayDiv.className = `flex flex-col items-center justify-center min-h-[40px] rounded-lg cursor-pointer transition-all ${hasSleep ? 'bg-slate-50 border border-slate-100' : 'hover:bg-slate-50'}`;
-                dayDiv.innerHTML = `<span class="text-[10px] font-black ${hasSleep ? 'text-slate-800' : 'text-slate-300'}">${d}</span>${hasSleep ? `<div class="w-1.5 h-1.5 rounded-full mt-1 ${tirednessColors[log.sleep.tiredness] || 'bg-slate-300'}"></div>` : ''}`;
-                dayDiv.onclick = () => {
-                    document.getElementById('sleep-tab-date').value = iso;
-                    loadSleepDataForDate(iso);
-                };
-                grid.appendChild(dayDiv);
-            }
+    // Editor events
+    $('#btn-editor-cancel').addEventListener('click', () => Editor.close());
+    $('#btn-editor-save').addEventListener('click', () => Editor.save());
+    $('#btn-delete-log').addEventListener('click', () => Editor.deleteLog());
+
+    // Editor input handlers
+    ['edit-date', 'edit-mood', 'edit-weight', 'edit-fat', 'edit-notes'].forEach(id => {
+        $(`#${id}`).addEventListener('input', () => Editor.handleInput());
+    });
+
+    // Editor exercise delegation
+    $('#edit-exercises').addEventListener('click', (e) => {
+        const rmex = e.target.closest('[data-editor-rmex]');
+        if (rmex) { Editor.removeExercise(parseInt(rmex.dataset.editorRmex)); return; }
+        const rmset = e.target.closest('[data-editor-rmset]');
+        if (rmset) { const [ei, si] = rmset.dataset.editorRmset.split(':').map(Number); Editor.removeSet(ei, si); return; }
+        const addset = e.target.closest('[data-editor-addset]');
+        if (addset) { Editor.addSet(parseInt(addset.dataset.editorAddset)); return; }
+    });
+
+    // Editor set input
+    $('#edit-exercises').addEventListener('input', (e) => {
+        const ds = e.target.dataset.editorSet;
+        if (ds) {
+            const [ei, si, field] = ds.split(':');
+            Editor.updateSet(parseInt(ei), parseInt(si), field === 'weight' ? 'weight' : 'reps', e.target.value);
         }
+    });
 
-        window.changeSleepMonth = (dir) => { currentSleepMonth.setMonth(currentSleepMonth.getMonth()+dir); renderSleepCalendar(); };
+    // Editor library search
+    $('#edit-lib-search').addEventListener('input', debounce((e) => {
+        Editor.renderLibGrid(e.target.value);
+    }, 200));
 
-        function renderStats() {
-            const logs = [...appState.logs].sort((a,b) => new Date(a.date) - new Date(b.date));
-            const prs = { s: 0, b: 0, d: 0 };
-            logs.forEach(l => l.exercises.forEach(ex => {
-                const max = Math.max(...ex.sets.map(s => s.weight));
-                if(ex.name.includes('深蹲')) prs.s = Math.max(prs.s, max);
-                if(ex.name.includes('卧推')) prs.b = Math.max(prs.b, max);
-                if(ex.name.includes('硬拉')) prs.d = Math.max(prs.d, max);
-            }));
-            document.getElementById('pr-squat').textContent = prs.s || '--';
-            document.getElementById('pr-bench').textContent = prs.b || '--';
-            document.getElementById('pr-deadlift').textContent = prs.d || '--';
-            
-            const labels = logs.map(l => l.date.slice(5));
-            const zoomOptions = {
-                pan: { enabled: true, mode: 'x' },
-                zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' }
-            };
+    // Editor quick-add exercise delegation
+    $('#edit-lib-grid').addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-editor-addex]');
+        if (btn) Editor.addExercise(btn.dataset.editorAddex);
+    });
 
-            if(charts.volume) charts.volume.destroy();
-            charts.volume = new Chart(document.getElementById('volume-chart'), { 
-                type: 'bar', 
-                data: { labels, datasets: [{ label: '容量', data: logs.map(l => calculateLogVolume(l)), backgroundColor: 'rgba(59, 130, 246, 0.4)', borderRadius: 8 }] }, 
-                options: { plugins: { legend: { display: false }, zoom: zoomOptions }, scales: { y: { beginAtZero: true } } } 
-            });
-            
-            if(charts.sbd) charts.sbd.destroy();
-            charts.sbd = new Chart(document.getElementById('sbd-chart'), { 
-                type: 'line', 
-                data: { labels, datasets: [{ label: '蹲', data: logs.map(l => { const e = l.exercises.find(e => e.name.includes('深蹲')); return e ? Math.max(...e.sets.map(s => s.weight)) : null; }), borderColor: '#ef4444', tension: 0.4, spanGaps: true }, { label: '推', data: logs.map(l => { const e = l.exercises.find(e => e.name.includes('卧推')); return e ? Math.max(...e.sets.map(s => s.weight)) : null; }), borderColor: '#3b82f6', tension: 0.4, spanGaps: true }, { label: '拉', data: logs.map(l => { const e = l.exercises.find(e => e.name.includes('硬拉')); return e ? Math.max(...e.sets.map(s => s.weight)) : null; }), borderColor: '#1e293b', tension: 0.4, spanGaps: true }] },
-                options: { plugins: { zoom: zoomOptions } }
-            });
-            
-            if(charts.weight) charts.weight.destroy();
-            charts.weight = new Chart(document.getElementById('weight-chart'), { 
-                type: 'line', 
-                data: { labels, datasets: [{ data: logs.map(l => l.weight), borderColor: '#f97316', backgroundColor: 'rgba(249, 115, 22, 0.1)', fill: true, tension: 0.4 }] }, 
-                options: { plugins: { legend: { display: false }, zoom: zoomOptions } } 
-            });
-            
-            if(charts.fat) charts.fat.destroy();
-            charts.fat = new Chart(document.getElementById('fat-chart'), { 
-                type: 'line', 
-                data: { labels, datasets: [{ data: logs.map(l => l.bodyFat), borderColor: '#ec4899', backgroundColor: 'rgba(236, 72, 153, 0.1)', fill: true, tension: 0.4 }] }, 
-                options: { plugins: { legend: { display: false }, zoom: zoomOptions } } 
-            });
+    // Timer events
+    $('#btn-timer-toggle').addEventListener('click', () => {
+        const widget = $('#timer-widget');
+        widget.classList.toggle('hidden');
+        if (!widget.classList.contains('hidden')) Timer.render();
+    });
+    $('#btn-timer-close').addEventListener('click', () => Timer.hide());
+    $('#btn-timer-action').addEventListener('click', () => Timer.toggle());
+    $$('[data-timer-set]').forEach(btn => {
+        btn.addEventListener('click', () => Timer.set(parseInt(btn.dataset.timerSet)));
+    });
+
+    // Swipe gestures for tab navigation
+    initSwipeGestures();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SWIPE GESTURES
+// ═══════════════════════════════════════════════════════════════
+
+function initSwipeGestures() {
+    const main = $('#main-scroll');
+    let startX = 0, startY = 0, swiping = false;
+
+    main.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        swiping = true;
+    }, { passive: true });
+
+    main.addEventListener('touchend', (e) => {
+        if (!swiping) return;
+        swiping = false;
+        const dx = e.changedTouches[0].clientX - startX;
+        const dy = e.changedTouches[0].clientY - startY;
+
+        // Only trigger if horizontal swipe is dominant and significant
+        if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+            const idx = TAB_ORDER.indexOf(Router.current);
+            if (dx > 0 && idx > 0) Router.switchTo(TAB_ORDER[idx - 1]);
+            else if (dx < 0 && idx < TAB_ORDER.length - 1) Router.switchTo(TAB_ORDER[idx + 1]);
         }
+    }, { passive: true });
+}
 
-        function renderCalendar() {
-            const grid = document.getElementById('calendar-days'); grid.innerHTML = '';
-            const y = currentMonth.getFullYear(), m = currentMonth.getMonth();
-            const names = ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"];
-            document.getElementById('calendar-title').innerHTML = `${y}年 ${names[m]}`;
-            const first = new Date(y, m, 1).getDay();
-            const daysCount = new Date(y, m+1, 0).getDate();
-            for(let i=0; i<first; i++) grid.appendChild(document.createElement('div'));
-            for(let d=1; d<=daysCount; d++) {
-                const iso = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-                const dayLogs = appState.logs.filter(l => l.date === iso);
-                const hasLog = dayLogs.length > 0;
-                let mainGroup = "";
-                if (hasLog) {
-                    const groupCounts = {};
-                    dayLogs.forEach(log => log.exercises.forEach(ex => groupCounts[ex.group] = (groupCounts[ex.group] || 0) + 1));
-                    const entries = Object.entries(groupCounts).sort((a,b) => b[1] - a[1]);
-                    mainGroup = entries.length > 0 ? entries[0][0] : "睡眠";
-                }
-                const dayDiv = document.createElement('div');
-                dayDiv.className = `flex flex-col items-center justify-start min-h-[50px] py-1 rounded-xl cursor-pointer transition-all ${hasLog ? 'bg-slate-50 border border-slate-100 shadow-sm' : 'hover:bg-slate-50'}`;
-                dayDiv.innerHTML = `<span class="text-[12px] font-black ${hasLog ? 'text-blue-600' : 'text-slate-400'}">${d}</span>${hasLog ? `<div class="mt-1 w-full px-1 flex flex-col items-center gap-0.5"><div class="w-2 h-2 rounded-full" style="background:${COLORS[mainGroup]}"></div><span class="text-[8px] font-bold text-slate-400 scale-90 whitespace-nowrap">${calculateLogVolume(dayLogs[0])}kg</span></div>` : ''}`;
-                dayDiv.onclick = () => {
-                    const detail = document.getElementById('calendar-detail');
-                    detail.innerHTML = dayLogs.length ? dayLogs.map(log => `<div class="bg-white p-5 rounded-2xl mt-3 shadow-sm flex justify-between items-center group active:scale-95 transition-all"><div class="flex items-center gap-3"><span class="text-3xl">${log.mood || '😊'}</span><div><div class="font-black text-slate-800 text-[14px]">${log.date} 训练日</div><div class="text-[10px] font-bold text-slate-400 uppercase mt-0.5">主练部位: ${mainGroup} | 容量: ${calculateLogVolume(log)}kg</div></div></div><button onclick="openEditor('${log.id}')" class="bg-blue-50 px-4 py-2 rounded-xl text-blue-600 font-black text-[11px]">查看详情</button></div>`).join('') : '<div class="p-10 text-center text-slate-300 text-[12px] italic">今日给自己放了个假 💤</div>';
-                };
-                grid.appendChild(dayDiv);
-            }
-        }
-        window.changeMonth = (dir) => { currentMonth.setMonth(currentMonth.getMonth()+dir); renderCalendar(); };
-        window.updateSettings = () => { appState.banner = document.getElementById('settings-banner').value; localStorage.setItem('fitlog_banner', appState.banner); document.getElementById('header-banner').textContent = appState.banner; alert('标语更新成功 ✨'); };
-        window.exportMarkdown = () => {
-            let md = "# FitLog 训练日志导出\n\n";
-            [...appState.logs].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(l => {
-                md += `## ${l.date} ${l.mood}\n- 总容量: ${calculateLogVolume(l)}kg\n- 体重: ${l.weight || '--'}kg / 体脂: ${l.bodyFat || '--'}%\n`;
-                l.exercises.forEach(ex => { md += `### ${ex.name} (${ex.group})\n`; ex.sets.forEach((s, i) => md += `- 组${i+1}: ${s.weight}kg x ${s.reps}次\n`); });
-                if(l.notes) md += `\n> 📝 备注: ${l.notes}\n`;
-                md += `\n---\n\n`;
-            });
-            const blob = new Blob([md], {type:'text/markdown'});
-            const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-            a.download = `FitLog_Export_${getLocalToday()}.md`; a.click();
-        };
-        window.clearData = () => { if(confirm('⚠️ 确定要清空所有数据吗？此操作无法撤销。')) { localStorage.clear(); location.reload(); } };
-        init();
-    </script>
-<script type="module" src="/index.tsx"></script>
+// ═══════════════════════════════════════════════════════════════
+//  INITIALIZATION
+// ═══════════════════════════════════════════════════════════════
+
+function init() {
+    // Load data
+    Data.load();
+
+    // Apply theme
+    Theme.load();
+    updateChartDefaults();
+
+    // Set banner
+    $('#header-banner').textContent = Data.state.banner;
+    $('#settings-banner').value = Data.state.banner;
+
+    // Bind events
+    initEvents();
+
+    // Initial render
+    renderDashboard();
+
+    // Hide editor initially
+    $('#editor-overlay').classList.add('hidden');
+}
+
+init();
+</script>
 </body>
 </html>
