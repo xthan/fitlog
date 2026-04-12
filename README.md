@@ -1,20 +1,34 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# FITLOG
 
-# Run and deploy your AI Studio app
+A lightweight fitness tracking PWA. Single HTML file, zero dependencies, zero build step.
 
-This contains everything you need to run your app locally.
+**Live:** https://xthan.github.io/fitlog/
 
-View your app in AI Studio: https://ai.studio/apps/6f7a66d6-b10c-4f03-9baf-99ca65c5ab6e
+## Features
+
+- Workout logging with exercise library (30+ presets)
+- Calendar view with training heatmap
+- Sleep tracking with duration/quality charts
+- SBD strength PR tracking & volume trends
+- Body weight / body fat charts
+- Rest timer with visual countdown
+- JSON backup & restore
+- Dark mode
+- Swipe navigation
+- iPhone safe area support
+
+## Tech
+
+Single `index.html` — Tailwind CSS (CDN) + Chart.js + vanilla JS. All data in `localStorage`.
 
 ## Run Locally
 
-**Prerequisites:**  Node.js
+Open `index.html` in a browser, or:
 
+```bash
+python3 -m http.server 8090
+```
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## License
+
+MIT &copy; 2024-2026 Xintong Han
